@@ -1,0 +1,8 @@
+{
+  "PORT": "5000",
+  "mongoURL": "mongodb+srv://tigran:qwerty3228@cluster0.01myt.mongodb.net/app?retryWrites=true&w=majority",
+  "Facebook": {
+    "clientID": "451427646060125",
+    "clientSecret": "a55397b22bfe5fbae25c01252d3cb4aa"
+  }
+}
