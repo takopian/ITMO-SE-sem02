@@ -1,27 +1,39 @@
-import React from 'react'
-import {Switch, Route, Redirect} from 'react-router-dom'
+import React from 'react';
+import {
+    BrowserRouter as Router,
+    Route,
+    Redirect,
+    Switch
+    }
+    from "react-router-dom";
 import {AuthPage} from './pages/AuthPage'
-import {MainPage} from "./pages/MainPage";
+import {MainPage} from "./pages/MainPage/MainPage";
+import {RoomPage} from "./pages/RoomPage/RoomPage";
 
 export const useRoutes = isAuthenticated => {
 
         if (isAuthenticated) {
             return (
-                <Switch>
+                <Router>
+                    <Switch>
                     <Route path="/profile" exact>
                         <MainPage />
                     </Route>
-                    <Redirect to="/profile" />
-                </Switch>
+                    <Route path="/room">
+                        <RoomPage />
+                    </Route>
+                    <Redirect to="/profile"/>
+                    </Switch>
+                </Router>
             )
         }
 
         return (
-            <Switch>
+            <Router>
                 <Route path="/" exact>
                     <AuthPage />
                 </Route>
                 <Redirect to="/" />
-            </Switch>
+            </Router>
         )
 }

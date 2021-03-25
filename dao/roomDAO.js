@@ -6,6 +6,11 @@ async function getRooms () {
     return rooms;
 }
 
+async function getRoomById (roomId) {
+    const room = await Room.findOne({_id: roomId});
+    return room;
+}
+
 async function getPlayers (roomId) {
     const room = await Room.findOne({_id: roomId});
     return room.players;
@@ -32,14 +37,17 @@ async function createRoom (name, owner, game, isPrivate) {
     room.game = game;
     room.isPrivate = isPrivate;
     room.players = [owner];
-    room.save(function(err) {
-        if (err)
+    const roomId = room._id;
+    room.save(function( err, res) {
+        if (err) {
             throw err;
+        }
     });
+    return roomId;
 }
 
 async function deleteRoom (roomId) {
     await Room.deleteOne({_id: roomId});
 }
 
-module.exports = {getRooms, getPlayers, joinRoom, leaveRoom, createRoom, deleteRoom}
+module.exports = {getRooms, getPlayers, joinRoom, leaveRoom, createRoom, deleteRoom, getRoomById}

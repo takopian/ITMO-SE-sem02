@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState, useRef} from 'react'
 import {useHttp} from "../hooks/http.hook";
 import {AuthContext} from '../context/AuthContext'
+import Button from "react-bootstrap/Button";
 
 export const AuthPage = () => {
     const auth = useContext(AuthContext)
@@ -22,15 +23,16 @@ export const AuthPage = () => {
         facebookRegister().then()
     }, [loginRef])
 
-    return (<div>
+    return (
+        <div>
         <h1> Auth Page </h1>
-        <button
-            className="btn waves-effect waves-light"
+        <Button
+            variant="primary"
             onClick = {() => {window.location = "/auth/facebook"}}
             ref={loginRef}
             disabled={loading}
-            >
+        >
             facebook
-        </button>
+        </Button>
     </div>)
 }

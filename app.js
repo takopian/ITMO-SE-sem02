@@ -86,9 +86,14 @@ io.on('connection', async (socket) => {
     const rooms = await roomDAO.getRooms();
     io.to('common room').emit('roomsData', {rooms});
 
-    socket.on('create room', async (user) => {
-        await roomDAO.createRoom('test', user, 'durak', false);
+    socket.on('create room', async ({name, user, game, isPrivate}) => {
+        const newRoomId = await roomDAO.createRoom(name, user, game, isPrivate);
+        console.log(newRoomId);
+        const newRoom = await roomDAO.getRoomById(newRoomId);
+        socket.join(newRoomId);
+        io.to(newRoomId).emit('room created', newRoomId);
         console.log("room created.");
+        console.log(newRoom);
         const rooms = await roomDAO.getRooms();
         io.to('common room').emit('roomsData', {rooms});
     });
