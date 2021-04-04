@@ -1,7 +1,7 @@
 const config = require("./config.json");
 const roomDAO = require('./dao/roomDAO');
 const User = require('./models/User');
-const Room = require('./models/Room');
+const DurakGame = require('./models/Durak/DurakGame')
 const PORT = config.PORT || 5000;
 const express = require('express');
 const cors = require('cors');
@@ -20,6 +20,13 @@ const io = socketio(server,{
     cors: {
         origin: '*',
     }
+});
+
+const roomIO = socketio(server,{
+    cors: {
+        origin: '*',
+    },
+    path: "/room"
 });
 
 mongoose.connect(config.mongoURL, {
@@ -89,17 +96,16 @@ io.on('connection', async (socket) => {
     socket.on('create room', async ({name, user, game, isPrivate}) => {
         const newRoomId = await roomDAO.createRoom(name, user, game, isPrivate);
         console.log(newRoomId);
-        const newRoom = await roomDAO.getRoomById(newRoomId);
         socket.join(newRoomId);
         io.to(newRoomId).emit('room created', newRoomId);
         console.log("room created.");
-        console.log(newRoom);
         const rooms = await roomDAO.getRooms();
         io.to('common room').emit('roomsData', {rooms});
     });
 
-    socket.on('join room', async ({user, room}) => {
-        await roomDAO.joinRoom(room._id, user);
+    socket.on('join room', async ({user, roomId}) => {
+        console.log(`user ${user._id} joined ${roomId}`);
+        await roomDAO.joinRoom(roomId, user);
         const rooms = await roomDAO.getRooms();
         io.to('common room').emit('roomsData', {rooms});
     })
@@ -109,6 +115,34 @@ io.on('connection', async (socket) => {
     });
 
 });
+
+roomIO.on('connection', async (socket) => {
+    console.log("New room socket connection.");
+    let game = {};
+
+    socket.on('start game', async ({roomId}) => {
+        console.log("start game");
+        const room = await roomDAO.getRoomById(roomId);
+        game = new DurakGame(room);
+        game.startUp();
+        console.log(game);
+        roomIO.to(roomId).emit('game state', {game});
+
+    })
+
+    socket.on('next turn', async ({roomId, state}) => {
+        game = state;
+        game.endOfTurn();
+        roomIO.to(roomId).emit('game state', {game});
+    });
+
+    socket.on('room info', async ( { roomId } ) => {
+        console.log('room info');
+        socket.join(roomId);
+        const room = await roomDAO.getRoomById(roomId);
+        roomIO.to(roomId).emit('info', {room});
+    });
+})
 
 app.get('/profile', isLoggedIn, function(req, res) {
     res.send(req.user)
@@ -120,6 +154,7 @@ app.get('/logout', async (req, res) => {
         const filter = {uid : req.user.uid};
         const update = {isOnline : false};
         await User.findOneAndUpdate(filter, update);
+        req.user = {};
     }
     res.send({status: 'ok' });
 });

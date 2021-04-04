@@ -2,10 +2,9 @@ import React, {useContext, useEffect, useState} from 'react'
 import {useHttp} from "../../hooks/http.hook";
 import {AuthContext} from "../../context/AuthContext";
 import io from 'socket.io-client';
-//import 'materialize-css'
 import {CreateRoom} from "./createRoom"
 import {RoomTable} from "./roomTable";
-import {Link, useHistory} from "react-router-dom";
+import {useHistory} from "react-router-dom";
 let socket;
 
 export const MainPage = () => {
@@ -39,15 +38,19 @@ export const MainPage = () => {
         }
     }
 
-    const joinRoom = (ind) => {
+    const joinRoom = (roomId_) => {
         if (user){
-            socket.emit('join room', {user, room: availableRooms[ind]});
-            setRoomId(availableRooms[ind]._id);
+            auth.join(roomId_)
+            socket.emit('join room', {user, roomId: roomId_});
+            setRoomId(roomId_);
+            socket.disconnect();
+            history.push('/room');
         }
     }
 
     useEffect(() => {
-        socket = io(ENDPOINT)
+        socket = io(ENDPOINT);
+        console.log(socket);
         request('/profile')
             .then((user) => {
                 setUser(user);
@@ -63,14 +66,15 @@ export const MainPage = () => {
 
     useEffect(() => {
         socket.on('room created', (room) => {
-            console.log('vau', room);
             setRoomId(room);
         });
     }, []);
 
     useEffect(() => {
         if (roomId) {
-            history.push(`/room?user=${user._id}&id=${roomId}`);
+            auth.join(roomId)
+            socket.disconnect();
+            history.push('/room');
         }
     },[roomId]);
 

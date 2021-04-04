@@ -28,7 +28,7 @@ export const RoomTable = ({availableRooms, joinRoom, loading}) => {
                     <td>
                         <Button
                             className="btn waves-effect waves-light"
-                            onClick={() => {joinRoom(i)}}
+                            onClick={() => {joinRoom(room._id)}}
                             disabled={loading}
                         >
                             Join

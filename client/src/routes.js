@@ -11,10 +11,8 @@ import {MainPage} from "./pages/MainPage/MainPage";
 import {RoomPage} from "./pages/RoomPage/RoomPage";
 
 export const useRoutes = isAuthenticated => {
-
         if (isAuthenticated) {
             return (
-                <Router>
                     <Switch>
                     <Route path="/profile" exact>
                         <MainPage />
@@ -24,7 +22,6 @@ export const useRoutes = isAuthenticated => {
                     </Route>
                     <Redirect to="/profile"/>
                     </Switch>
-                </Router>
             )
         }
 
