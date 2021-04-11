@@ -1,12 +1,11 @@
 let Deque = require('../GameObjects/Deque')
-let durak = require('../GameObjects/initDeque')
-// import {Deque} from '../GameObjects/Deque'
-// import {durak} from "../GameObjects/initDeque";
+let genDurakInitDeque = require('../GameObjects/initDeque')
+
 
 class DurakDeque extends Deque {
     constructor() {
         super();
-        this.cards = durak;
+        this.cards = genDurakInitDeque();
     }
 }
 

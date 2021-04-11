@@ -43,10 +43,8 @@ passport.use(new facebookStrategy({
         profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)','email']
     },
     function(token, refreshToken, profile, done) {
-
         process.nextTick(function() {
             User.findOne({ 'uid' : profile.id }, function(err, user) {
-
                 if (err)
                     return done(err);
                 if (user) {
@@ -57,10 +55,11 @@ passport.use(new facebookStrategy({
                 } else {
                     const newUser = new User();
                     newUser.uid    = profile.id;
-                    newUser.name  = profile.name.givenName + ' ' + profile.name.familyName;
+                    newUser.name  = profile.name.givenName + (profile.name.familyName ? ' ' + profile.name.familyName : '');
                     newUser.email = profile.emails[0].value;
                     newUser.pic = profile.photos[0].value;
                     newUser.isOnline = true;
+                    newUser.joinedRoom = null;
                     newUser.save(function(err) {
                         if (err)
                             throw err;
@@ -111,38 +110,83 @@ io.on('connection', async (socket) => {
     })
 
     socket.on('disconnect', () => {
-        console.log('User had left.')
+        console.log('User had left main page.')
     });
 
 });
 
+let games = {};
+
 roomIO.on('connection', async (socket) => {
     console.log("New room socket connection.");
-    let game = {};
 
-    socket.on('start game', async ({roomId}) => {
+    socket.on('disconnect', () => {
+        console.log('User had left room.')
+    });
+
+    socket.on('start game', async ({roomId, userId}) => {
         console.log("start game");
-        const room = await roomDAO.getRoomById(roomId);
-        game = new DurakGame(room);
+        let room = await roomDAO.getRoomById(roomId);
+        let game = new DurakGame(room);
         game.startUp();
-        console.log(game);
-        roomIO.to(roomId).emit('game state', {game});
-
-    })
-
-    socket.on('next turn', async ({roomId, state}) => {
-        game = state;
-        game.endOfTurn();
+        games[roomId] = game;
         roomIO.to(roomId).emit('game state', {game});
     });
 
-    socket.on('room info', async ( { roomId } ) => {
+    socket.on('attack', ({roomId, userId, card}) => {
+        console.log("attack", roomId, userId, card);
+        games[roomId].attack(userId, card);
+        roomIO.to(roomId).emit('game state', {game: games[roomId]});
+    });
+
+    socket.on('defend', ({roomId, key, topCard}) => {
+        console.log("defend");
+        games[roomId].defend(key, topCard);
+        roomIO.to(roomId).emit('game state', {game: games[roomId]});
+    });
+
+    socket.on('take board cards', ({roomId}) => {
+        console.log("take board cards");
+        games[roomId].countToTake += 1;
+        if (games[roomId].countToTake === games[roomId].room.players.length) {
+            games[roomId].takeBoardCards();
+        }
+        roomIO.to(roomId).emit('game state', {game: games[roomId]});
+    });
+
+    socket.on('next turn', ({roomId}) => {
+        console.log("next turn");
+        games[roomId].countToNextTurn += 1;
+        if (games[roomId].countToNextTurn === games[roomId].room.players.length - 1) {
+            games[roomId].endOfTurn();
+        }
+        roomIO.to(roomId).emit('game state', {game: games[roomId]});
+    });
+
+    socket.on('room info', async ( {roomId} ) => {
         console.log('room info');
         socket.join(roomId);
         const room = await roomDAO.getRoomById(roomId);
         roomIO.to(roomId).emit('info', {room});
     });
-})
+
+    socket.on("leave room", async ({roomId, userId}) => {
+        console.log("leave room");
+        await roomDAO.leaveRoom(roomId, userId);
+        if (games[roomId]) {
+            let newRoom = roomDAO.getRoomById(roomId);
+            games[roomId].leaveGame(userId, newRoom);
+            console.log(games[roomId])
+            roomIO.to(roomId).emit('game state', {game: games[roomId]});
+        }
+    });
+
+    socket.on("delete room", async ({roomId, userId}) => {
+        console.log("delete room");
+        await roomDAO.deleteRoom(roomId, userId);
+        roomIO.to(roomId).emit('delete room', {roomId});
+    });
+});
 
 app.get('/profile', isLoggedIn, function(req, res) {
     res.send(req.user)

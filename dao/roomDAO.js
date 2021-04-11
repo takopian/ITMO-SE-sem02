@@ -1,5 +1,6 @@
-
 const Room = require('../models/Room');
+const User = require('../models/User')
+
 
 async function getRooms () {
     const rooms = await Room.find({});
@@ -17,17 +18,29 @@ async function getPlayers (roomId) {
 }
 
 async function joinRoom (roomId, user) {
-    await Room.findOneAndUpdate(
-        { _id: roomId },
-        { $push: { players: user }}
-    );
+    let room = await Room.findOne({_id: roomId});
+    let ind = room.players.findIndex((element, index, array) => (element._id.toString() === user._id));
+    if (ind === -1) {
+        await Room.findOneAndUpdate(
+            { _id: roomId },
+            { $push: { players: user }}
+        );
+        const filter = {_id : user._id};
+        const update = {joinedRoom : roomId};
+        await User.findOneAndUpdate(filter, update);
+    }
 }
 
-async function leaveRoom (roomId, user) {
-    await Room.findOneAndUpdate(
-        { _id: roomId },
-        { $pull: { players: user }}
-    );
+async function leaveRoom (roomId, userId) {
+    let room = await Room.findOne({_id: roomId});
+    let ind = room.players.findIndex((element, index, array) => (element._id.toString() === userId));
+    if (ind !== -1) {
+        room.players.splice(ind, 1);
+        room.save();
+        const filter = {_id : userId};
+        const update = {joinedRoom : null};
+        await User.findOneAndUpdate(filter, update);
+    }
 }
 
 async function createRoom (name, owner, game, isPrivate) {
@@ -43,10 +56,16 @@ async function createRoom (name, owner, game, isPrivate) {
             throw err;
         }
     });
+    const filter = {_id : owner._id};
+    const update = {joinedRoom : roomId};
+    await User.findOneAndUpdate(filter, update);
     return roomId;
 }
 
-async function deleteRoom (roomId) {
+async function deleteRoom (roomId, owner) {
+    const filter = {_id : owner._id};
+    const update = {joinedRoom : null};
+    await User.findOneAndUpdate(filter, update);
     await Room.deleteOne({_id: roomId});
 }
 

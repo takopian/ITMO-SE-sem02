@@ -2,7 +2,7 @@ import React, {useEffect} from "react";
 import {GameCard} from "./Card";
 
 
-export const Slot = ({slot}) => {
+export const Slot = ({key, slot}) => {
 
     useEffect(() => {
 
@@ -11,7 +11,8 @@ export const Slot = ({slot}) => {
     return(
         <div>
             <GameCard
-            card={slot.bottom.card}
+                key={key}
+                card={slot.bottom.card}
             >
             </GameCard>
         </div>

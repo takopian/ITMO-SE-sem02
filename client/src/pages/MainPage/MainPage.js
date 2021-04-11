@@ -8,15 +8,12 @@ import {useHistory} from "react-router-dom";
 let socket;
 
 export const MainPage = () => {
-    const auth = useContext(AuthContext)
-    const {loading, error, request} = useHttp()
-    const ENDPOINT = 'localhost:5000'
-    const [userID, setUserId] = useState(auth.userId)
-    const [user, setUser] = useState()
-    const [roomId, setRoomId] = useState()
-    // const [roomToJoin, setRoomToJoin] = useState()
-    const [availableRooms, setAvailableRooms] = useState([])
-    const [show, setShow] = useState(false);
+    const auth = useContext(AuthContext);
+    const {loading, error, request} = useHttp();
+    const ENDPOINT = 'localhost:5000';
+    const [user, setUser] = useState();
+    const [roomId, setRoomId] = useState();
+    const [availableRooms, setAvailableRooms] = useState([]);
     const [name, setName] = useState('');
     const [isPrivate, setIsPrivate] = useState(false);
     const [game, setGame] = useState("Дурак");
@@ -24,8 +21,8 @@ export const MainPage = () => {
 
     const logout = async () => {
         try {
-            await request('/logout')
-            auth.logout()
+            await request('/logout');
+            auth.logout();
         } catch (e) {
             console.log(e)
         }
@@ -40,7 +37,7 @@ export const MainPage = () => {
 
     const joinRoom = (roomId_) => {
         if (user){
-            auth.join(roomId_)
+            auth.join(roomId_);
             socket.emit('join room', {user, roomId: roomId_});
             setRoomId(roomId_);
             socket.disconnect();
@@ -55,6 +52,7 @@ export const MainPage = () => {
             .then((user) => {
                 setUser(user);
             });
+        return () => {};
     }, [ENDPOINT])
 
 

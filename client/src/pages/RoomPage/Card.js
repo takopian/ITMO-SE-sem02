@@ -5,17 +5,19 @@ let styles = {
     mouseOff: {
         marginBottom: 0,
         width: '3rem',
-        height: '4rem'
+        height: '4rem',
+        fontSize: '11px'
     },
     mouseOn: {
         marginBottom: 30,
         color: "blue",
         width: '3rem',
-        height: '4rem'
+        height: '4rem',
+        fontSize: '11px'
     },
 }
 
-export const GameCard = ({card, clickHandler}) => {
+export const GameCard = ({ card, clickHandler}) => {
     const [mouseOn, setMouseOn] = useState(false)
 
     const mouseEnterHandler = () => {
@@ -33,11 +35,12 @@ export const GameCard = ({card, clickHandler}) => {
             {mouseOn ? (
                 <Card
                     style={styles.mouseOn}
-                    className="mb-2"
+                    className="mb-sm-n1"
                 >
                     <Card.Body>
-                        <Card.Title></Card.Title>
+                        <Card.Title style={{position: 'absolute', top: 0, left: 0, fontSize:'12px'}}>{card.value}</Card.Title>
                         <Card.Text>
+                            {card.suit}
                         </Card.Text>
                     </Card.Body>
                 </Card>
@@ -46,11 +49,11 @@ export const GameCard = ({card, clickHandler}) => {
                 <Card
                     style={styles.mouseOff}
                     className="mb-2"
-
                 >
                     <Card.Body>
-                        <Card.Title></Card.Title>
+                        <Card.Title style={{position: 'absolute', top: 0, left: 0, fontSize:'12px'}}> {card.value} </Card.Title>
                         <Card.Text>
+                            {card.suit}
                         </Card.Text>
                     </Card.Body>
                 </Card>

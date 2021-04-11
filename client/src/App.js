@@ -7,8 +7,9 @@ import React from "react";
 
 function App() {
   const {token, login, logout, userId, roomId, join, leave} = useAuth()
-  const isAuthenticated = !!token
-  const routes = useRoutes(isAuthenticated)
+  const isAuthenticated = !!token;
+  const isJoinedToRoom = !!roomId;
+  const routes = useRoutes({isAuthenticated, isJoinedToRoom})
 
   return (
       <AuthContext.Provider value={{
