@@ -1,6 +1,4 @@
 import React, {useEffect, useState} from "react";
-import {Slot} from "./Slot";
-import CardGroup from "react-bootstrap/CardGroup";
 import {GameCard} from "./Card";
 
 

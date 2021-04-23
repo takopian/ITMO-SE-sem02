@@ -37,6 +37,11 @@ class DurakGame{
         this.refillHands();
     }
 
+    leaveGame(userId, newRoom) {
+        delete this.hands[userId]
+        this.room = newRoom;
+    }
+
     attack(userId, card) {
         if (this.board.length < 6) {
             const ind = this.hands[userId].findIndex((element, index, array) => (element.suit === card.suit && element.value === card.value));
@@ -53,12 +58,29 @@ class DurakGame{
         this.board[key].top = {userId: this.defendingPlayer._id, card: topCard};
     }
 
-    refillHands() {
-        for (let userId in this.hands) {
-            while (this.hands[userId].length < 6 && this.deque.getSize() > 0){
-                this.hands[userId].push(this.deque.getTopCard());
-            }
+    refillHand(playerId) {
+        while (this.hands[playerId].length < 6 && this.deque.getSize() > 0){
+            this.hands[playerId].push(this.deque.getTopCard());
         }
+        if (this.winner === null && this.hands[playerId].length === 0) {
+            this.winner = this.room.players[playerId];
+        }
+    }
+    refillHands() {
+        const finalInd = this.room.players.findIndex((element, index, array) => (element._id === this.defendingPlayer._id));
+        let curInd = (finalInd - 1) < 0 ? this.room.players.length - 1 : (finalInd - 1);
+        for (let i = 0; i < this.room.players.length - 1; i++) {
+            if (curInd === finalInd) {
+                curInd = (curInd + 1) % this.room.players.length;
+                continue;
+            }
+            let curId = this.room.players[curInd]._id
+            this.refillHand(curId);
+            curInd = (curInd + 1) % this.room.players.length;
+        }
+
+        let finalId = this.room.players[finalInd]._id
+        this.refillHand(finalId);
     }
 
     takeBoardCards() {
@@ -81,7 +103,6 @@ class DurakGame{
         }
         let ind = this.lastLost ? 2 : 1;
         this.defendingPlayer = this.room.players[(this.room.players.findIndex((element, index, array) => element._id === this.defendingPlayer._id) + ind) % this.room.players.length];
-        console.log(this.lastLost, ind, this.defendingPlayer, (this.room.players.findIndex((element, index, array) => element._id === this.defendingPlayer._id) + ind) % this.room.players.length);
         this.countToNextTurn = 0;
         this.countToTake = 0;
         this.lastLost = false;
@@ -101,11 +122,6 @@ class DurakGame{
             return notEmptyHands[0];
         }
         return null;
-    }
-
-    leaveGame(userId, newRoom) {
-        delete this.hands[userId]
-        this.room = newRoom;
     }
 }
 

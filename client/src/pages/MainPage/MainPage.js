@@ -1,19 +1,16 @@
 import React, {useContext, useEffect, useState} from 'react'
 import {useHttp} from "../../hooks/http.hook";
 import {AuthContext} from "../../context/AuthContext";
-import io from 'socket.io-client';
 import {CreateRoom} from "./createRoom"
 import {RoomTable} from "./roomTable";
 import {useHistory} from "react-router-dom";
-let socket;
+import {useMainPageSocket} from "../../hooks/socket.main.hook";
 
 export const MainPage = () => {
     const auth = useContext(AuthContext);
     const {loading, error, request} = useHttp();
-    const ENDPOINT = 'localhost:5000';
+    const {rooms_, roomId_, joinRoom_, createRoom_} = useMainPageSocket()
     const [user, setUser] = useState();
-    const [roomId, setRoomId] = useState();
-    const [availableRooms, setAvailableRooms] = useState([]);
     const [name, setName] = useState('');
     const [isPrivate, setIsPrivate] = useState(false);
     const [game, setGame] = useState("Дурак");
@@ -27,9 +24,10 @@ export const MainPage = () => {
             console.log(e)
         }
     }
+
     const createRoom = () => {
         if (user){
-            socket.emit('create room', {name, user, game, isPrivate });
+            createRoom_(name, user, game, isPrivate);
         } else {
             alert("???")
         }
@@ -37,44 +35,30 @@ export const MainPage = () => {
 
     const joinRoom = (roomId_) => {
         if (user){
+            joinRoom_(user, roomId_)
             auth.join(roomId_);
-            socket.emit('join room', {user, roomId: roomId_});
-            setRoomId(roomId_);
-            socket.disconnect();
+            // socket.disconnect();
             history.push('/room');
         }
     }
 
     useEffect(() => {
-        socket = io(ENDPOINT);
-        console.log(socket);
         request('/profile')
             .then((user) => {
                 setUser(user);
             });
         return () => {};
-    }, [ENDPOINT])
+    },[])
 
 
     useEffect(() => {
-        socket.on('roomsData', ({rooms}) => {
-            setAvailableRooms(rooms);
-        });
-    }, []);
-
-    useEffect(() => {
-        socket.on('room created', (room) => {
-            setRoomId(room);
-        });
-    }, []);
-
-    useEffect(() => {
-        if (roomId) {
-            auth.join(roomId)
-            socket.disconnect();
+        if (roomId_) {
+            auth.join(roomId_)
+            //socket.disconnect();
             history.push('/room');
         }
-    },[roomId]);
+        return () => {};
+    },[roomId_]);
 
     return (
         <div className="container" style={{display: 'flex', flexDirection: 'row'}}>
@@ -112,7 +96,7 @@ export const MainPage = () => {
             </div>
             <div style={{width: '70%'}}>
                 <RoomTable
-                    availableRooms={availableRooms}
+                    availableRooms={rooms_}
                     joinRoom={joinRoom}
                     loading={loading}
                 >

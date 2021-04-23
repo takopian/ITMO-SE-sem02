@@ -3,9 +3,9 @@ import {AuthContext} from "../../context/AuthContext";
 import io from 'socket.io-client';
 import {Helmet} from 'react-helmet';
 import Button from "react-bootstrap/Button";
-import {Hand} from "./Hand";
-import {Slots} from "./Slots";
 import {useHistory} from "react-router-dom";
+import {GameFactory} from "./Games/GameFactory";
+import {PlayersTable} from "./PlayersTable";
 
 let socket;
 
@@ -16,50 +16,10 @@ export const RoomPage = () => {
     const [userId, setUserId] = useState('');
     const [roomId, setRoomId] = useState('');
     const [room, setRoom] = useState();
-    const [game, setGame] = useState();
     const [gameStarted, setGameStarted] = useState(false);
-    const [slots, setSlots] = useState([]);
-    const [defending, setDefending] = useState();
-    const [chosenCard, setChosenCard] = useState(null);
-    const [countToTake, setCountToTake] = useState(0);
-    const [countToNextTurn, setCountToNextTurn] = useState(0);
-    const [clickedNextTurn, setClickedNextTurn] = useState(false);
-    const [clickedTakeCards, setClickedTakeCards] = useState(false);
 
     const startGame = () => {
         socket.emit('start game', {roomId, userId});
-    }
-
-    const attack = (card) => {
-        if (userId !== defending._id) {
-            socket.emit("attack", {roomId, userId, card});
-        }
-    }
-
-    const chooseCard = (card) => {
-        if (chosenCard && chosenCard === card) {
-            setChosenCard(null);
-            return;
-        }
-        setChosenCard(card);
-    }
-
-    const defend = (key, topCard) => {
-        if (userId === defending._id && chosenCard) {
-            socket.emit("defend", {roomId, key, topCard});
-        }
-    }
-
-    const takeBoardCards = () => {
-        if (slots.length > 0) {
-            setClickedTakeCards(true);
-            socket.emit("take board cards", {roomId});
-        }
-    }
-
-    const nextTurn = () => {
-        setClickedNextTurn(true);
-        socket.emit("next turn", {roomId});
     }
 
     const leaveRoom = () => {
@@ -90,25 +50,17 @@ export const RoomPage = () => {
     },[]);
 
     useEffect(() => {
+        socket.on('game started', () => {
+            setGameStarted(true);
+        });
+    },[]);
+
+    useEffect(() => {
         socket.on("delete room", () => {
             auth.leave();
             history.push('/profile');
         })
     })
-
-    useEffect(() => {
-        socket.on('game state', ({game}) => {
-            setDefending(game.defendingPlayer);
-            console.log(game);
-            setGame(game);
-            setSlots(game.board)
-            setGameStarted(true);
-            setCountToTake(game.countToTake);
-            setCountToNextTurn(game.countToNextTurn);
-            if (game.countToTake === 0) { setClickedNextTurn(false); }
-            if (game.countToTake === 0) { setClickedTakeCards(false); }
-        });
-    },[]);
 
 
     return(
@@ -126,10 +78,21 @@ export const RoomPage = () => {
                     <></>
                 )}
                 </div>
-                <div>
+                <div style={{marginTop: 90}}>
+                    { room ? (
+                        <PlayersTable
+                            room={room}
+                        >
+                        </PlayersTable>
+                    ) : (
+                        <></>
+                    )}
+                </div>
+
+                <div style={{marginTop: 50}}>
                     {!gameStarted && room && room.owner._id ===userId ? (
                         <Button
-                        onClick={startGame}
+                            onClick={startGame}
                         >
                             Start
                         </Button>
@@ -137,7 +100,7 @@ export const RoomPage = () => {
                         <></>
                     )}
                 </div>
-                <div>
+                <div style={{marginTop: 20}}>
                     { room && userId !== room.owner._id ? (
                         <Button
                             onClick={leaveRoom}
@@ -148,12 +111,12 @@ export const RoomPage = () => {
                         <></>
                     )}
                 </div>
-                <div>
+                <div style={{marginTop: 20}}>
                     { room && userId === room.owner._id && !gameStarted ? (
                         <Button
                             onClick={deleteRoom}
                         >
-                            Delete room
+                            Close room
                         </Button>
                     ) : (
                         <></>
@@ -162,76 +125,14 @@ export const RoomPage = () => {
             </div>
 
                 { gameStarted ? (
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                        <h2>Defending player - {game.defendingPlayer.name}</h2>
-                        <div style={{marginLeft: '20%', position: "fixed", top: '40%', width:'13%'}}>
-                            <div>
-                                <Slots
-                                    slots={slots}
-                                    defend={defend}
-                                    isDefending={userId === defending._id}
-                                    chosenCard={chosenCard}
-                                >
-                                </Slots>
-                            </div>
-                        </div>
-                        <div style={{marginLeft: '20%', position: "fixed", bottom: '10%', width:'40%'}}>
-                        { game && game.hands? (
-                                <Hand
-                                    cards={game.hands[userId]}
-                                    attack={attack}
-                                    chooseCard={chooseCard}
-                                    isDefending={userId === defending._id}
-                                >
-                                </Hand>
-                            )
-                            :
-                            (<></>)
-                        }
-                        </div>
-                        <div style={{position: "fixed", left: "30%", bottom: '5%', width:'40%'}}>
-                            {defending._id === userId && slots.length > 0 ? (
-                                <div>
-                                    <Button
-                                    onClick={takeBoardCards}
-                                    disabled={countToTake > 0}
-                                    >
-                                        Take cards
-                                    </Button>
-                                </div>
-                            ) : (
-                                <></>
-                            )}
-                            {defending._id !== userId && slots.length > 0 && countToTake === 0 ? (
-                                <div>
-                                    <Button
-                                        onClick={nextTurn}
-                                        disabled={clickedNextTurn}
-                                    >
-                                        End turn
-                                    </Button>
-                                </div>
-                            ) : (
-                                <></>
-                            )}
-                            {defending._id !== userId && slots.length > 0 && countToTake > 0 ? (
-                                <div>
-                                    <Button
-                                        onClick={takeBoardCards}
-                                        disabled={clickedTakeCards}
-                                    >
-                                        Ok
-                                    </Button>
-                                </div>
-                            ) : (
-                                <></>
-                            )}
-                        </div>
-                    </div>
+                    <GameFactory
+                        room={room}
+                        userId={userId}
+                    >
+                    </GameFactory>
                 ) : (
                     <></>
                 )}
         </div>
-
     )
 }

@@ -16,17 +16,24 @@ const mongoose = require('mongoose');
 const app = express();
 const  server = http.createServer(app);
 app.use(cors());
-const io = socketio(server,{
+const io = socketio(server, {
     cors: {
         origin: '*',
     }
 });
 
-const roomIO = socketio(server,{
+const roomIO = socketio(server, {
     cors: {
         origin: '*',
     },
     path: "/room"
+});
+
+const durakIO = socketio(server, {
+    cors: {
+        origin: '*',
+    },
+    path: "/game/durak"
 });
 
 mongoose.connect(config.mongoURL, {
@@ -121,7 +128,7 @@ roomIO.on('connection', async (socket) => {
     console.log("New room socket connection.");
 
     socket.on('disconnect', () => {
-        console.log('User had left room.')
+        console.log('User had left room.');
     });
 
     socket.on('start game', async ({roomId, userId}) => {
@@ -130,37 +137,7 @@ roomIO.on('connection', async (socket) => {
         let game = new DurakGame(room);
         game.startUp();
         games[roomId] = game;
-        roomIO.to(roomId).emit('game state', {game});
-    });
-
-    socket.on('attack', ({roomId, userId, card}) => {
-        console.log("attack", roomId, userId, card);
-        games[roomId].attack(userId, card);
-        roomIO.to(roomId).emit('game state', {game: games[roomId]});
-    });
-
-    socket.on('defend', ({roomId, key, topCard}) => {
-        console.log("defend");
-        games[roomId].defend(key, topCard);
-        roomIO.to(roomId).emit('game state', {game: games[roomId]});
-    });
-
-    socket.on('take board cards', ({roomId}) => {
-        console.log("take board cards");
-        games[roomId].countToTake += 1;
-        if (games[roomId].countToTake === games[roomId].room.players.length) {
-            games[roomId].takeBoardCards();
-        }
-        roomIO.to(roomId).emit('game state', {game: games[roomId]});
-    });
-
-    socket.on('next turn', ({roomId}) => {
-        console.log("next turn");
-        games[roomId].countToNextTurn += 1;
-        if (games[roomId].countToNextTurn === games[roomId].room.players.length - 1) {
-            games[roomId].endOfTurn();
-        }
-        roomIO.to(roomId).emit('game state', {game: games[roomId]});
+        roomIO.to(roomId).emit('game started');
     });
 
     socket.on('room info', async ( {roomId} ) => {
@@ -176,8 +153,7 @@ roomIO.on('connection', async (socket) => {
         if (games[roomId]) {
             let newRoom = roomDAO.getRoomById(roomId);
             games[roomId].leaveGame(userId, newRoom);
-            console.log(games[roomId])
-            roomIO.to(roomId).emit('game state', {game: games[roomId]});
+            roomIO.to(roomId).emit('user left', {game: games[roomId]});
         }
     });
 
@@ -187,6 +163,65 @@ roomIO.on('connection', async (socket) => {
         roomIO.to(roomId).emit('delete room', {roomId});
     });
 });
+
+durakIO.on('connection', async (socket) => {
+    console.log("New durak socket connection.");
+
+    function sendInfo(game){
+        let gameInfo = {...game, hands: {}}
+        for (let player of game.room.players) {
+            gameInfo.hands[player._id] = game.hands[player._id].length;
+        }
+
+        for (let player of game.room.players) {
+            gameInfo.hands[player._id] = game.hands[player._id];
+            durakIO.to(player._id.toString()).emit('game state', {game: gameInfo});
+            gameInfo.hands[player._id] = game.hands[player._id].length;
+        }
+    }
+
+    socket.on('disconnect', () => {
+        console.log('User had left durak game.')
+    });
+
+    socket.on('game info', ({roomId, userId}) => {
+        console.log("game info");
+        socket.join(userId);
+        socket.join(roomId);
+        sendInfo(games[roomId]);
+    });
+
+    socket.on('attack', ({roomId, userId, card}) => {
+        console.log("attack", roomId, userId, card);
+        games[roomId].attack(userId, card);
+        sendInfo(games[roomId]);
+    });
+
+    socket.on('defend', ({roomId, key, topCard}) => {
+        console.log("defend");
+        games[roomId].defend(key, topCard);
+        sendInfo(games[roomId]);
+    });
+
+    socket.on('take board cards', ({roomId}) => {
+        console.log("take board cards");
+        games[roomId].countToTake += 1;
+        if (games[roomId].countToTake === games[roomId].room.players.length) {
+            games[roomId].takeBoardCards();
+        }
+        sendInfo(games[roomId]);
+    });
+
+    socket.on('next turn', ({roomId}) => {
+        console.log("next turn");
+        games[roomId].countToNextTurn += 1;
+        if (games[roomId].countToNextTurn === games[roomId].room.players.length - 1) {
+            games[roomId].endOfTurn();
+        }
+        sendInfo(games[roomId]);
+    });
+});
+
 
 app.get('/profile', isLoggedIn, function(req, res) {
     res.send(req.user)
