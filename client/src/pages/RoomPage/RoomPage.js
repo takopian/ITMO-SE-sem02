@@ -6,6 +6,7 @@ import Button from "react-bootstrap/Button";
 import {useHistory} from "react-router-dom";
 import {GameFactory} from "./Games/GameFactory";
 import {PlayersTable} from "./PlayersTable";
+import Modal from "react-bootstrap/Modal";
 
 let socket;
 
@@ -17,9 +18,14 @@ export const RoomPage = () => {
     const [roomId, setRoomId] = useState('');
     const [room, setRoom] = useState();
     const [gameStarted, setGameStarted] = useState(false);
+    const [gameFinished, setGameFinished] = useState(false);
+    const [chooseIfRestart, setChooseIfRestart] = useState(false);
+    const [userToLeave, setUserToLeave] = useState(null);
 
     const startGame = () => {
-        socket.emit('start game', {roomId, userId});
+        socket.emit('start game', {roomId});
+        setChooseIfRestart(false);
+        setUserToLeave(null);
     }
 
     const leaveRoom = () => {
@@ -30,6 +36,12 @@ export const RoomPage = () => {
 
     const deleteRoom = () => {
         socket.emit("delete room", ({roomId, userId}));
+    }
+
+    const chooseContinue = () => {
+        socket.emit("continue without user", ({roomId, userId: userToLeave}));
+        setChooseIfRestart(false);
+        setUserToLeave(null);
     }
 
     useEffect(() => {
@@ -51,6 +63,8 @@ export const RoomPage = () => {
 
     useEffect(() => {
         socket.on('game started', () => {
+            setGameStarted(false);
+            setGameFinished(false);
             setGameStarted(true);
         });
     },[]);
@@ -59,8 +73,22 @@ export const RoomPage = () => {
         socket.on("delete room", () => {
             auth.leave();
             history.push('/profile');
-        })
-    })
+        });
+    }, []);
+
+    useEffect(() => {
+        socket.on("game finished", () => {
+            setGameFinished(true);
+            setGameStarted(false);
+        });
+    }, []);
+
+    useEffect(() => {
+        socket.on("user left game", ({userId}) => {
+            setChooseIfRestart(true);
+            setUserToLeave(userId);
+        });
+    }, []);
 
 
     return(
@@ -90,7 +118,7 @@ export const RoomPage = () => {
                 </div>
 
                 <div style={{marginTop: 50}}>
-                    {!gameStarted && room && room.owner._id ===userId ? (
+                    {(!gameStarted || gameFinished) && room && room.owner._id ===userId ? (
                         <Button
                             onClick={startGame}
                         >
@@ -124,7 +152,7 @@ export const RoomPage = () => {
                 </div>
             </div>
 
-                { gameStarted ? (
+                { gameStarted || gameFinished ? (
                     <GameFactory
                         room={room}
                         userId={userId}
@@ -133,6 +161,22 @@ export const RoomPage = () => {
                 ) : (
                     <></>
                 )}
+
+            {room && room.owner._id === userId ? (
+                <Modal animation={false} show={chooseIfRestart}>
+                    <Modal.Body>
+                        User left. Continue?
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={chooseContinue}>
+                            Continue
+                        </Button>
+                        <Button variant="primary" onClick={startGame}>
+                            Restart
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            ) : (<></>)}
         </div>
     )
 }

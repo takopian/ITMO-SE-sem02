@@ -5,6 +5,7 @@ import {Hand} from "./Hand";
 import {Slots} from "./Slots";
 import {OtherHand} from "./OtherHand";
 import {Deque} from "./Deque";
+import Card from "react-bootstrap/Card";
 
 let socket;
 
@@ -12,7 +13,7 @@ export const Durak = ({room, userId}) => {
     const ENDPOINT = 'localhost:5000';
     const [game, setGame] = useState();
     const [slots, setSlots] = useState([]);
-    const [defending, setDefending] = useState();
+    const [defendingPlayer, setDefendingPlayer] = useState();
     const [chosenCard, setChosenCard] = useState(null);
     const [countToTake, setCountToTake] = useState(0);
     const [countToNextTurn, setCountToNextTurn] = useState(0);
@@ -23,9 +24,8 @@ export const Durak = ({room, userId}) => {
     const [otherHands, setOtherHands] = useState([]);
     const [otherHandsStyles, setOtherHandsStyles] = useState([]);
 
-
     const attack = (card) => {
-        if (userId !== defending._id) {
+        if (userId !== defendingPlayer._id) {
             socket.emit("attack", {roomId: room._id, userId, card});
         }
     }
@@ -39,7 +39,7 @@ export const Durak = ({room, userId}) => {
     }
 
     const defend = (key, topCard) => {
-        if (userId === defending._id && chosenCard) {
+        if (userId === defendingPlayer._id && chosenCard) {
             socket.emit("defend", {roomId: room._id, key, topCard});
         }
     }
@@ -101,7 +101,7 @@ export const Durak = ({room, userId}) => {
     useEffect(() => {
         socket.on('game state', ({game}) => {
             console.log(game);
-            setDefending(game.defendingPlayer);
+            setDefendingPlayer(game.defendingPlayer);
             setSlots(game.board)
             setCountToTake(game.countToTake);
             setCountToNextTurn(game.countToNextTurn);
@@ -114,6 +114,12 @@ export const Durak = ({room, userId}) => {
     },[]);
 
     useEffect(() => {
+        if (loser) {
+            socket.emit("game finished", ({roomId: room._id}));
+        }
+    }, [loser])
+
+    useEffect(() => {
         if (game) {
             let curInd = (game.room.players.findIndex(
                 (element, index, array) => (element._id === userId)) + 1) % game.room.players.length;
@@ -122,8 +128,7 @@ export const Durak = ({room, userId}) => {
             let newOtherHands = []
             let newOtherHandsStyles = []
             for (let i = 0; i < game.room.players.length - 1; i++) {
-                console.log(curInd, game.room.players, game.room.players[curInd]);
-                newOtherHands.push({name: game.room.players[curInd].name, numberOfCards: game.hands[game.room.players[curInd]._id]});
+                newOtherHands.push({player: {_id: game.room.players[curInd]._id, name: game.room.players[curInd].name, isDefending: defendingPlayer._id === game.room.players[curInd]._id}, numberOfCards: game.hands[game.room.players[curInd]._id]});
                 let newStyle = angleToStyle(curAngle);
                 newStyle.left = newStyle.left.toString() + '%';
                 newStyle.bottom = newStyle.bottom.toString() + '%';
@@ -133,7 +138,6 @@ export const Durak = ({room, userId}) => {
                 curInd = curInd + 1 % game.room.players.length;
                 curAngle += angleStep;
             }
-            console.log(otherHands, otherHandsStyles);
         }
     }, [game]);
 
@@ -153,7 +157,7 @@ export const Durak = ({room, userId}) => {
                             <Slots
                                 slots={slots}
                                 defend={defend}
-                                isDefending={userId === defending._id}
+                                isDefending={userId === defendingPlayer._id}
                                 chosenCard={chosenCard}
                             >
                             </Slots>
@@ -174,7 +178,7 @@ export const Durak = ({room, userId}) => {
                             <Slots
                                 slots={slots}
                                 defend={defend}
-                                isDefending={userId === defending._id}
+                                isDefending={userId === defendingPlayer._id}
                                 chosenCard={chosenCard}
                             >
                             </Slots>
@@ -183,28 +187,34 @@ export const Durak = ({room, userId}) => {
                         {otherHands.map((hand, index) => (
                             <div style={{...otherHandsStyles[index], position: "fixed"}}>
                                 <OtherHand
-                                player={hand.name}
+                                player={hand.player}
                                 numberOfCards={hand.numberOfCards}
+                                isTaking={hand.player._id === defendingPlayer._id && countToTake > 0}
                                 >
                                 </OtherHand>
                             </div>
                         ))}
                     <div style={{marginLeft: '20%', position: "fixed", bottom: '10%', width:'40%'}}>
-                        { game && game.hands? (
+                        { game && game.hands ? (
+                                <div>
                                 <Hand
+                                    player={game.room.players[game.room.players.findIndex(
+                                        (element, index, array) => (element._id === userId))].name}
                                     cards={game.hands[userId]}
                                     attack={attack}
                                     chooseCard={chooseCard}
-                                    isDefending={userId === defending._id}
+                                    isDefending={userId === defendingPlayer._id}
+                                    isTaking={userId === defendingPlayer._id && countToTake > 0}
                                 >
                                 </Hand>
+                                </div>
                             )
                             :
                             (<></>)
                         }
                     </div>
                     <div style={{position: "fixed", left: "30%", bottom: '5%', width:'40%'}}>
-                        {defending._id === userId && slots.length > 0 ? (
+                        {defendingPlayer._id === userId && slots.length > 0 ? (
                             <div>
                                 <Button
                                     onClick={takeBoardCards}
@@ -216,7 +226,7 @@ export const Durak = ({room, userId}) => {
                         ) : (
                             <></>
                         )}
-                        {defending._id !== userId && slots.length > 0 && countToTake === 0 ? (
+                        {defendingPlayer._id !== userId && slots.length > 0 && countToTake === 0 ? (
                             <div>
                                 <Button
                                     onClick={nextTurn}
@@ -228,7 +238,7 @@ export const Durak = ({room, userId}) => {
                         ) : (
                             <></>
                         )}
-                        {defending._id !== userId && slots.length > 0 && countToTake > 0 ? (
+                        {defendingPlayer._id !== userId && slots.length > 0 && countToTake > 0 ? (
                             <div>
                                 <Button
                                     onClick={takeBoardCards}
@@ -241,6 +251,23 @@ export const Durak = ({room, userId}) => {
                             <></>
                         )}
                     </div>
+                    { loser && winner ? (
+                        <div style={{position: "fixed", left: "40%", bottom: '50%', width:'15%'}}>
+                            <Card>
+                                <Card.Body>
+                                    <Card.Text>
+                                        Игра окончена. Победитель - {game.room.players[game.room.players.findIndex(
+                                        (element, index, array) => (element._id === winner))].name}
+                                    </Card.Text>
+                                    <Card.Text>
+                                        Проигравший - {game.room.players[game.room.players.findIndex(
+                                        (element, index, array) => (element._id === loser))].name}
+                                    </Card.Text>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ) : (<></>)
+                    }
                 </div>
             ) : (
                 <></>

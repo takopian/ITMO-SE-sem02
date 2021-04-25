@@ -56,6 +56,8 @@ passport.use(new facebookStrategy({
                     return done(err);
                 if (user) {
                     user.isOnline = true;
+                    user.name  = profile.name.givenName + (profile.name.familyName ? ' ' + profile.name.familyName : '');
+                    user.pic = profile.photos[0].value;
                     user.save();
                     console.log("user found");
                     return done(null, user);
@@ -131,7 +133,7 @@ roomIO.on('connection', async (socket) => {
         console.log('User had left room.');
     });
 
-    socket.on('start game', async ({roomId, userId}) => {
+    socket.on('start game', async ({roomId}) => {
         console.log("start game");
         let room = await roomDAO.getRoomById(roomId);
         let game = new DurakGame(room);
@@ -145,17 +147,26 @@ roomIO.on('connection', async (socket) => {
         socket.join(roomId);
         const room = await roomDAO.getRoomById(roomId);
         roomIO.to(roomId).emit('info', {room});
+        if (games[roomId] !== undefined) { roomIO.to(roomId).emit('game started'); }
     });
 
     socket.on("leave room", async ({roomId, userId}) => {
         console.log("leave room");
         await roomDAO.leaveRoom(roomId, userId);
+        const room = await roomDAO.getRoomById(roomId);
+        roomIO.to(roomId).emit('info', {room});
         if (games[roomId]) {
-            let newRoom = roomDAO.getRoomById(roomId);
-            games[roomId].leaveGame(userId, newRoom);
-            roomIO.to(roomId).emit('user left', {game: games[roomId]});
+            roomIO.to(roomId).emit('user left game', {userId});
         }
     });
+
+    socket.on("continue without user", ({roomId, userId}) => {
+        console.log(`continue without ${userId}`);
+        if (games[roomId]) {
+            games[roomId].leaveGame(userId);
+            roomIO.to(roomId).emit('game started');
+        }
+    })
 
     socket.on("delete room", async ({roomId, userId}) => {
         console.log("delete room");
@@ -219,6 +230,11 @@ durakIO.on('connection', async (socket) => {
             games[roomId].endOfTurn();
         }
         sendInfo(games[roomId]);
+    });
+
+    socket.on('game finished', ({roomId}) => {
+        console.log("game finished");
+        roomIO.to(roomId).emit("game finished", ({roomId}));
     });
 });
 
