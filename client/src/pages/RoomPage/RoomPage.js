@@ -4,9 +4,12 @@ import io from 'socket.io-client';
 import {Helmet} from 'react-helmet';
 import Button from "react-bootstrap/Button";
 import {useHistory} from "react-router-dom";
-import {GameFactory} from "./Games/GameFactory";
+import {GameFactory, getMinPlayers} from "./Games/GameFactory";
 import {PlayersTable} from "./PlayersTable";
 import Modal from "react-bootstrap/Modal";
+import {useDispatch, useSelector} from "react-redux";
+import {clearTable} from "../../redux/actions/roomTableActions";
+import {Chat} from "./Chat";
 
 let socket;
 
@@ -21,6 +24,8 @@ export const RoomPage = () => {
     const [gameFinished, setGameFinished] = useState(false);
     const [chooseIfRestart, setChooseIfRestart] = useState(false);
     const [userToLeave, setUserToLeave] = useState(null);
+    const [minPlayers, setMinPlayers] = useState(null);
+    const dispatch = useDispatch();
 
     const startGame = () => {
         socket.emit('start game', {roomId});
@@ -32,6 +37,7 @@ export const RoomPage = () => {
         socket.emit("leave room", ({roomId, userId}));
         auth.leave();
         history.push('/profile');
+        dispatch(clearTable());
     }
 
     const deleteRoom = () => {
@@ -44,13 +50,22 @@ export const RoomPage = () => {
         setUserToLeave(null);
     }
 
+    const endGame = () => {
+        socket.emit("clean board", ({roomId}));
+        setChooseIfRestart(false);
+        setUserToLeave(null);
+    }
+
+    const sendMessage = (text) => {
+        socket.emit('send message', {roomId, userId, text});
+    }
+
     useEffect(() => {
         console.log(auth.userId, auth.roomId);
         socket = io(ENDPOINT, {path: "/room"});
         setRoomId(auth.roomId);
         setUserId(auth.userId);
         socket.emit('room info', { roomId: auth.roomId });
-
         return () => {}
     }, [ENDPOINT]);
 
@@ -58,6 +73,8 @@ export const RoomPage = () => {
         socket.on('info', ({room}) => {
             console.log(room);
             setRoom(room);
+            let min = getMinPlayers(room.game);
+            setMinPlayers(min);
         });
     },[]);
 
@@ -79,6 +96,13 @@ export const RoomPage = () => {
     useEffect(() => {
         socket.on("game finished", () => {
             setGameFinished(true);
+            setGameStarted(false);
+        });
+    }, []);
+
+    useEffect(() => {
+        socket.on("board cleaned", () => {
+            setGameFinished(false);
             setGameStarted(false);
         });
     }, []);
@@ -116,11 +140,11 @@ export const RoomPage = () => {
                         <></>
                     )}
                 </div>
-
                 <div style={{marginTop: 50}}>
                     {(!gameStarted || gameFinished) && room && room.owner._id ===userId ? (
                         <Button
                             onClick={startGame}
+                            disabled={room.players.length < minPlayers}
                         >
                             Start
                         </Button>
@@ -139,7 +163,7 @@ export const RoomPage = () => {
                         <></>
                     )}
                 </div>
-                <div style={{marginTop: 20}}>
+                <div style={{marginTop: 10}}>
                     { room && userId === room.owner._id && !gameStarted ? (
                         <Button
                             onClick={deleteRoom}
@@ -150,6 +174,18 @@ export const RoomPage = () => {
                         <></>
                     )}
                 </div>
+                {room ? (
+                    <div style={{marginTop: -50}}>
+                        <Chat
+                            sendMessage={sendMessage}
+                            chatHistory={room.chatHistory}
+                        >
+                        </Chat>
+                    </div>
+                ) : (
+                    <></>
+                )}
+
             </div>
 
                 { gameStarted || gameFinished ? (
@@ -168,11 +204,14 @@ export const RoomPage = () => {
                         User left. Continue?
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={chooseContinue}>
+                        <Button variant="secondary" onClick={chooseContinue} disabled={room.players.length < minPlayers}>
                             Continue
                         </Button>
-                        <Button variant="primary" onClick={startGame}>
+                        <Button variant="primary" onClick={startGame} disabled={room.players.length < minPlayers}>
                             Restart
+                        </Button>
+                        <Button variant="secondary" onClick={endGame}>
+                            End game
                         </Button>
                     </Modal.Footer>
                 </Modal>

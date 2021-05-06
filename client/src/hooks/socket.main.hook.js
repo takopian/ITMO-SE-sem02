@@ -15,7 +15,7 @@ export const useMainPageSocket = () => {
     }, [])
 
     const joinRoom_ = useCallback((user, roomId) => {
-            socket.emit('join room', {user, roomId});
+        socket.emit('join room', {user, roomId});
     },[])
 
     useEffect(() => {

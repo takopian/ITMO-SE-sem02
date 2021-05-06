@@ -2,14 +2,15 @@ import React from "react";
 import {OtherCard} from "./OtherCard";
 import {GameCard} from "./Card";
 
-export const Deque = ({deque}) => {
+export const Deque = ({numberOfCards, bestCard}) => {
+    const deque = Array(numberOfCards - 1).fill(0);
     return (
         <div
             style={{display: 'flex', flexDirection: 'column'}}
         >
             <div style={{marginBottom:15}}>
             <GameCard
-                card={deque[deque.length - 1]}
+                card={bestCard}
                 clickHandler={() => {}}
             >
             </GameCard>

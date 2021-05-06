@@ -4,7 +4,6 @@ import {Durak} from "./Durak/Durak";
 export const GameFactory = ({room, userId}) => {
     switch (room.game) {
         case "Дурак":
-            console.log(room.game);
             return (
                 <Durak
                     room={room}
@@ -12,6 +11,15 @@ export const GameFactory = ({room, userId}) => {
                 />
                 );
 
+        default:
+            throw new RangeError();
+    }
+}
+
+export const getMinPlayers = (game) => {
+    switch (game) {
+        case "Дурак":
+            return 2;
         default:
             throw new RangeError();
     }

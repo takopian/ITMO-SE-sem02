@@ -113,7 +113,9 @@ io.on('connection', async (socket) => {
 
     socket.on('join room', async ({user, roomId}) => {
         console.log(`user ${user._id} joined ${roomId}`);
-        await roomDAO.joinRoom(roomId, user);
+        const room = await roomDAO.joinRoom(roomId, user);
+        console.log("joined")
+        roomIO.to(roomId).emit('info', {room});
         const rooms = await roomDAO.getRooms();
         io.to('common room').emit('roomsData', {rooms});
     })
@@ -121,7 +123,6 @@ io.on('connection', async (socket) => {
     socket.on('disconnect', () => {
         console.log('User had left main page.')
     });
-
 });
 
 let games = {};
@@ -173,13 +174,27 @@ roomIO.on('connection', async (socket) => {
         await roomDAO.deleteRoom(roomId, userId);
         roomIO.to(roomId).emit('delete room', {roomId});
     });
+
+    socket.on("clean board", ({roomId}) => {
+        console.log("clean board");
+        roomIO.to(roomId).emit('board cleaned');
+    });
+
+    socket.on('send message', async ({roomId, userId, text}) => {
+        console.log('send message ', text);
+        const user = await User.findOne({_id: userId});
+        const message = {text, name: user.name, pic: user.pic};
+        await roomDAO.addMessage(roomId, message);
+        const room = await roomDAO.getRoomById(roomId);
+        roomIO.to(roomId).emit('info', {room});
+    });
 });
 
 durakIO.on('connection', async (socket) => {
     console.log("New durak socket connection.");
 
     function sendInfo(game){
-        let gameInfo = {...game, hands: {}}
+        let gameInfo = {...game, discardedCards: game.discardedCards.length, deque: game.deque.cards.length, hands: {}}
         for (let player of game.room.players) {
             gameInfo.hands[player._id] = game.hands[player._id].length;
         }
@@ -257,6 +272,9 @@ app.get('/logout', async (req, res) => {
 function isLoggedIn(req, res, next) {
     if (req.isAuthenticated())
         return next();
+    // console.log(req.body);
+    // let userId = JSON.parse(req.body).userId;
+    // console.log(userId);
     res.redirect('/');
 }
 
@@ -271,8 +289,8 @@ app.get('/auth/facebook/callback',
 
 app.get('/', (req,res) => {
     console.log('Hi')
-})
+});
 
 server.listen(PORT,() => {
     console.log(`App is listening on Port ${PORT}`)
-})
+});

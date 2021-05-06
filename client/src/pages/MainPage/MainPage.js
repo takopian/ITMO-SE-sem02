@@ -43,11 +43,17 @@ export const MainPage = () => {
     }
 
     useEffect(() => {
+        let cleanupFunction = false;
         request('/profile')
             .then((user) => {
-                setUser(user);
+                try {
+                    console.log(user);
+                    if(!cleanupFunction) {setUser(user);}
+                } catch (e) {
+                    console.error(e.message);
+                }
             });
-        return () => {};
+        return () => {cleanupFunction = true;};
     },[])
 
 

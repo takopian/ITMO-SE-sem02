@@ -2,6 +2,7 @@ let DurakDeque = require("./DurakDeque")
 
 
 class DurakGame{
+    _id;
     room;
     deque;
     bestCard;
@@ -15,8 +16,11 @@ class DurakGame{
     loser;
     discardedCards;
     finishedPlayers;
+    static minNumOfPlayers = 2;
+    static maxNumOfPlayers = 6;
 
     constructor(room) {
+        this._id = '_' + Math.random().toString(36).substr(2, 9);
         this.room = room;
         this.deque = new DurakDeque();
         this.lastLost = false;
@@ -53,8 +57,9 @@ class DurakGame{
             const ind = this.hands[userId].findIndex((element, index, array) => (element.suit === card.suit && element.value === card.value));
             this.hands[userId].splice(ind, 1);
             this.board.push({key: this.board.length, bottom: {userId, card}, top: null});
-            if (this.winner === null && this.deque.length === 0 && this.hands[userId].length === 0) {
-                const winnerInd = this.room.players.findIndex((element, index, array) => (element._id === userId));
+            if (this.winner === null && this.deque.cards.length === 0 && this.hands[userId].length === 0) {
+                const winnerInd = this.room.players.findIndex((element, index, array) => (element._id.toString() === userId.toString()));
+                console.log(winnerInd);
                 this.winner = this.room.players[winnerInd]._id;
             }
         }
@@ -65,6 +70,10 @@ class DurakGame{
         const ind = this.hands[this.defendingPlayer._id].findIndex((element, index, array) => (element.suit === topCard.suit && element.value === topCard.value));
         this.hands[this.defendingPlayer._id].splice(ind, 1);
         this.board[key].top = {userId: this.defendingPlayer._id, card: topCard};
+        if (this.winner === null && this.deque.cards.length === 0 && this.hands[this.defendingPlayer._id].length === 0) {
+            const winnerInd = this.room.players.findIndex((element, index, array) => (element._id === this.defendingPlayer._id));
+            this.winner = this.room.players[winnerInd]._id;
+        }
     }
 
     refillHand(playerId) {
@@ -107,7 +116,7 @@ class DurakGame{
         this.endOfTurn();
     }
 
-    discardBoard(){
+    discardBoard() {
         for (let slot of this.board) {
             this.discardedCards.push(slot.bottom.card);
             if (slot.top !== null) { this.discardedCards.push(slot.top.card);}
@@ -124,8 +133,11 @@ class DurakGame{
 
     endOfTurn() {
         this.refillHands();
+        console.log("hands refilled");
         this.discardBoard();
+        console.log("board discarded");
         let loser = this.checkGameEnd();
+        console.log(loser);
         if (loser !== null) {
             this.loser = loser;
             return;
@@ -137,6 +149,7 @@ class DurakGame{
             nextDefInd = (nextDefInd + 1) %  this.room.players.length;
             nextDef = this.room.players[nextDefInd];
         }
+        console.log(loser);
         this.defendingPlayer = nextDef;
         this.countToNextTurn = 0;
         this.countToTake = 0;
@@ -155,6 +168,9 @@ class DurakGame{
         }
         if (notEmptyHands.length === 1){
             return notEmptyHands[0];
+        }
+        if (notEmptyHands.length === 0){
+            return this.defendingPlayer._id;
         }
         return null;
     }

@@ -6,6 +6,9 @@ import {Slots} from "./Slots";
 import {OtherHand} from "./OtherHand";
 import {Deque} from "./Deque";
 import Card from "react-bootstrap/Card";
+import {useDispatch, useSelector} from "react-redux";
+import {incrementWinnerCounter} from "../../../../redux/actions/roomTableActions";
+import {setCurrent} from "../../../../redux/actions/roomTableActions";
 
 let socket;
 
@@ -23,6 +26,9 @@ export const Durak = ({room, userId}) => {
     const [loser, setLoser] = useState(null);
     const [otherHands, setOtherHands] = useState([]);
     const [otherHandsStyles, setOtherHandsStyles] = useState([]);
+    const table = useSelector(state => state.roomTableReducer)
+    const dispatch = useDispatch();
+
 
     const attack = (card) => {
         if (userId !== defendingPlayer._id) {
@@ -102,12 +108,23 @@ export const Durak = ({room, userId}) => {
         socket.on('game state', ({game}) => {
             console.log(game);
             setDefendingPlayer(game.defendingPlayer);
+
             setSlots(game.board)
             setCountToTake(game.countToTake);
             setCountToNextTurn(game.countToNextTurn);
             if (game.countToNextTurn === 0) { setClickedNextTurn(false); }
             if (game.countToTake === 0) { setClickedTakeCards(false); }
             setWinner(game.winner);
+            if (game.winner !== null) {
+                let ind = table.findIndex((element, index, array) => element._id === game.winner);
+                if (!table[ind].wins.has(game._id)) {
+                    dispatch(incrementWinnerCounter(game._id, game.winner));
+                }
+            }
+            let defendingInd = game.room.players.findIndex(((value, index, obj) => value._id === game.defendingPlayer._id));
+            let attackingInd = (defendingInd + 1) % game.room.players.length;
+            console.log(defendingInd, attackingInd, game.room.players[attackingInd]._id.toString(), table);
+            dispatch(setCurrent(game.room.players[attackingInd]._id.toString()));
             setLoser(game.loser);
             setGame(game);
         });
@@ -163,10 +180,11 @@ export const Durak = ({room, userId}) => {
                             </Slots>
                         </div>
                     </div>
-                    { game.deque.cards.length > 0 ? (
+                    { game.deque > 0 ? (
                         <div style={{marginLeft: '10%', position: "fixed", top: '40%', width:'13%'}}>
                             <Deque
-                                deque={game.deque.cards}
+                                numberOfCards={game.deque}
+                                bestCard={game.bestCard}
                             >
                             </Deque>
                         </div>

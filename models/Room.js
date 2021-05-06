@@ -7,7 +7,8 @@ const roomSchema = new mongoose.Schema({
     name: String,
     game: String,
     players: [User.schema],
-    isPrivate: Boolean
+    isPrivate: Boolean,
+    chatHistory: [Object]
 });
 
 module.exports = mongoose.model('Room', roomSchema)

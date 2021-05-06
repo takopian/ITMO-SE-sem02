@@ -21,14 +21,17 @@ async function joinRoom (roomId, user) {
     let room = await Room.findOne({_id: roomId});
     let ind = room.players.findIndex((element, index, array) => (element._id.toString() === user._id));
     if (ind === -1) {
-        await Room.findOneAndUpdate(
-            { _id: roomId },
-            { $push: { players: user }}
-        );
+        // await Room.findOneAndUpdate(
+        //     { _id: roomId },
+        //     { $push: { players: user }}
+        // );
+        room.players.push(user);
+        room.save()
         const filter = {_id : user._id};
         const update = {joinedRoom : roomId};
         await User.findOneAndUpdate(filter, update);
     }
+    return room;
 }
 
 async function leaveRoom (roomId, userId) {
@@ -69,4 +72,11 @@ async function deleteRoom (roomId, owner) {
     await Room.deleteOne({_id: roomId});
 }
 
-module.exports = {getRooms, getPlayers, joinRoom, leaveRoom, createRoom, deleteRoom, getRoomById}
+async function addMessage(roomId, message) {
+    await Room.findOneAndUpdate(
+        { _id: roomId },
+        { $push: { chatHistory: message }}
+    );
+}
+
+module.exports = {getRooms, getPlayers, joinRoom, leaveRoom, createRoom, deleteRoom, getRoomById, addMessage}
