@@ -1,0 +1,21 @@
+.container {
+    display: flex;
+    flex-direction: row;
+}
+.controls {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+}
+.profilePic {
+    width: 40%;
+    margin: 20px 0
+}
+
+.room-table {
+    width: 70%;
+}
+.logout-button {
+    width: 40%;
+    margin-top: 20px;
+}

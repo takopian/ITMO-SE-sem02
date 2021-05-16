@@ -6,9 +6,9 @@ import {
     Switch
     }
     from "react-router-dom";
-import {AuthPage} from './pages/AuthPage'
-import {MainPage} from "./pages/MainPage/MainPage";
-import {RoomPage} from "./pages/RoomPage/RoomPage";
+import {AuthPage} from './components/AuthPage'
+import {MainPage} from "./components/MainPage/MainPage";
+import {RoomPage} from "./components/RoomPage/RoomPage";
 
 export const useRoutes = ({isAuthenticated, isJoinedToRoom}) => {
         if (isAuthenticated) {

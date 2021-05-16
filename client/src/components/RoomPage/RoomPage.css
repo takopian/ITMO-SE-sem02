@@ -1,0 +1,22 @@
+.roomContainer {
+    display: flex;
+    flex-direction: row
+}
+.roomInnerContainer {
+    width: 20%;
+}
+.playersTable {
+    margin-top: 90px;
+}
+.startGameButton {
+    margin-top: 50px;
+}
+.leaveRoomButton {
+    margin-top: 20px;
+}
+.deleteRoomButton {
+    margin-top: 10px;
+}
+.roomChat {
+    margin-top: -50px;
+}

@@ -1,8 +1,9 @@
-export const addPlayer = (name, _id) => {
+export const addPlayer = (name, _id, isSpectator) => {
     return {
         type: "ADDPLAYER",
         name,
-        _id
+        _id,
+        isSpectator
     }
 }
 

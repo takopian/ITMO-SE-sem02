@@ -2,7 +2,7 @@ export const roomTableReducer = (state = [], action) => {
     switch (action.type) {
         case 'ADDPLAYER': {
             let newState = [...state];
-            newState.push({name: action.name, _id: action._id, wins: new Set(), isCurrent: false});
+            newState.push({name: action.name, _id: action._id, wins: new Set(), isCurrent: false, isSpectator: action.isSpectator});
             return newState;
         }
         case 'SETWINNER': {

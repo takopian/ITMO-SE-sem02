@@ -1,0 +1,10 @@
+.dequeContainer {
+    display: flex;
+    flex-direction: column;
+}
+.bestCard {
+    margin-bottom: 30px;
+}
+.deque {
+    margin-top: -55.5px;
+}

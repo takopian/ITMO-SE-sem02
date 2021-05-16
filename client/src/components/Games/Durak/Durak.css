@@ -1,0 +1,41 @@
+.durakInnerContainer {
+    display: flex;
+    flex-direction: column;
+}
+.gameBoardContainer {
+    margin-left: 20%;
+    position: fixed;
+    top: 40%;
+    width: 13%;
+}
+.dequeContainer {
+    left: 30%;
+    position: fixed;
+    top: 40%;
+    width: 13%;
+}
+.otherHandContainer {
+    position: fixed;
+}
+.handContainer {
+    left: 40%;
+    position: fixed;
+    bottom: 10%;
+    width:40%;
+}
+.buttonGroup {
+    position: fixed;
+    left: 30%;
+    bottom: 5%;
+    width: 40%;
+}
+.endGameInfo {
+    position: fixed;
+    left: 40%;
+    bottom: 50%;
+    width: 15%;
+}
+.cardStyle {
+    width: 10rem;
+    height: 10rem;
+}

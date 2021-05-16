@@ -1,0 +1,28 @@
+.chatContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: green;
+    height: 500px
+}
+.messages {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: green;
+    border-radius: 10px;
+    height: 60%;
+    overflow-y: scroll;
+    width: 100%;
+}
+.message {
+    background: #F3F3F3;
+    border-radius: 20px;
+    padding: 5px 20px;
+    color: white;
+    display: inline-block;
+    max-width: 80%
+}
+.sendForm {
+    margin-top: 15px
+}
