@@ -54,7 +54,9 @@ export const MainPage = () => {
                     console.error(e.message);
                 }
             });
-        return () => {cleanupFunction = true;};
+        return () => {
+            cleanupFunction = true;
+        };
     },[])
 
 

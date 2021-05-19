@@ -1,19 +1,13 @@
 .mouseOff {
     margin-right: -20px;
     width: 10rem;
-    height: 4rem;
+    height: 5rem;
     font-size: 11px;
 }
 .mouseOn {
     color: blue;
     margin-right: -20px;
     width: 10rem;
-    height: 4rem;
-    font-size: 11px;
-}
-.cardTitle{
-    position: absolute;
-    top: 0;
-    left: 0;
+    height: 5rem;
     font-size: 11px;
 }

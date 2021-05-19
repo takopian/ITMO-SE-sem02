@@ -1,13 +1,16 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import Table from "react-bootstrap/Table";
 import {useSelector, useDispatch} from "react-redux";
 import {addPlayer} from "../../../redux/actions/roomTableActions";
+import Card from "react-bootstrap/Card";
 
 export const PlayersTable = ({room}) => {
     const table = useSelector(state => state.roomTableReducer);
+    const [tableCopy, setTableCopy] = useState(null);
     const dispatch = useDispatch();
 
     useEffect(() => {
+        console.log(room);
         room.players.map((player, i ) =>
         {
             let ind = table.findIndex((element, index, array) => element._id === player._id);
@@ -22,25 +25,28 @@ export const PlayersTable = ({room}) => {
                 dispatch(addPlayer(spec.name, spec._id, true));
             }
         })
-    },[room.players])
+        setTableCopy(table)
+        console.log(table);
+        return () => {}
+    },[room])
 
     return (
-        <Table s striped bordered hover>
-            <thead>
+        <Table striped bordered hover >
+            <thead style={{backgroundColor:"#006600", color: 'white'}}>
             <tr>
                 <th>Игроки</th>
                 <th>Количество побед</th>
             </tr>
             </thead>
-            <tbody>
+            <tbody style={{backgroundColor:"#006600"}}>
             {
                 table.map((player, i ) => {
                     if (!player.isSpectator) {
                         return (
                             <tr key={player._id}>
-                                <td>{player.name}</td>
-                                <td>{player.wins.size}</td>
-                                <td>{player.isCurrent.toString()}</td>
+                                <td style={{color: 'white'}}>{player.name}</td>
+                                <td style={{color: 'white'}}>{player.wins.size}</td>
+                                {player.isCurrent ? (<td>{<img src={process.env.PUBLIC_URL + '/room-table/your-turn.jpg'} style={{width: 60}} alt="Card image" />}</td>) : (<></>)}
                             </tr>
                         )
                     }

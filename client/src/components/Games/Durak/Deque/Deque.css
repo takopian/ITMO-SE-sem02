@@ -1,4 +1,4 @@
-.dequeContainer {
+.innerDequeContainer {
     display: flex;
     flex-direction: column;
 }

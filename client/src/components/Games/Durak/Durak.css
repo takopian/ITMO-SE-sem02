@@ -9,33 +9,39 @@
     width: 13%;
 }
 .dequeContainer {
-    left: 30%;
+    left: 40%;
     position: fixed;
     top: 40%;
+    width: 13%;
+}
+.discardedCardsContainer {
+    left: 40%;
+    position: fixed;
+    top: 65%;
     width: 13%;
 }
 .otherHandContainer {
     position: fixed;
 }
 .handContainer {
-    left: 40%;
+    left: 47.5%;
     position: fixed;
     bottom: 10%;
     width:40%;
 }
 .buttonGroup {
     position: fixed;
-    left: 30%;
-    bottom: 5%;
+    left: 37.5%;
+    bottom: 15px;
     width: 40%;
 }
 .endGameInfo {
     position: fixed;
-    left: 40%;
-    bottom: 50%;
-    width: 15%;
+    left: 45%;
+    bottom: 45%;
+    width: 20%;
 }
 .cardStyle {
-    width: 10rem;
+    width: 13rem;
     height: 10rem;
 }

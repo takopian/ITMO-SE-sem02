@@ -1,12 +1,13 @@
 .roomContainer {
     display: flex;
-    flex-direction: row
+    flex-direction: row;
 }
 .roomInnerContainer {
     width: 20%;
 }
 .playersTable {
-    margin-top: 90px;
+    margin-top: 40px;
+    margin-left: 10px;
 }
 .startGameButton {
     margin-top: 50px;
@@ -18,5 +19,8 @@
     margin-top: 10px;
 }
 .roomChat {
-    margin-top: -50px;
+    margin-left: 10px;
+}
+.roomName {
+    margin-top: 10px;
 }

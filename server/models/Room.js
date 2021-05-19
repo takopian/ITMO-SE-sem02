@@ -9,7 +9,8 @@ const roomSchema = new mongoose.Schema({
     players: [User.schema],
     spectators: [User.schema],
     isPrivate: Boolean,
-    chatHistory: [Object]
+    chatHistory: [Object],
+    expire_at: {type: Date, default: Date.now, expires: 72000}
 });
 
 module.exports = mongoose.model('Room', roomSchema)

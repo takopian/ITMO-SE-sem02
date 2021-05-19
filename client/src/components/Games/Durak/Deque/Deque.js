@@ -8,16 +8,21 @@ export const Deque = ({numberOfCards, bestCard}) => {
     const deque = Array(numberOfCards - 1).fill(0);
 
     return (
-        <div className="dequeContainer">
-            <div className="bestCard">
-                <GameCard
-                    card={bestCard}
-                    clickHandler={() => {}}
-                >
-                </GameCard>
-            </div>
+        <div className="innerDequeContainer">
+            {bestCard ? (
+                <div className="bestCard">
+                    <GameCard
+                        card={bestCard}
+                        clickHandler={() => {}}
+                    >
+                    </GameCard>
+                </div>
+            ) : (
+                <></>
+            ) }
+
             {deque.map((card, index) => (
-                <div className="deque">
+                <div key={index} className="deque">
                     {index !== deque.length - 1 ? (
                         <OtherCard>
                         </OtherCard>

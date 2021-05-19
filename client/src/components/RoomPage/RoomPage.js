@@ -7,7 +7,7 @@ import {useHistory} from "react-router-dom";
 import {GameFactory, getMinPlayers} from "./GameFactory";
 import {PlayersTable} from "./PlayersTable/PlayersTable";
 import {useDispatch, useSelector} from "react-redux";
-import {clearTable} from "../../redux/actions/roomTableActions";
+import {clearTable, deletePlayer} from "../../redux/actions/roomTableActions";
 import {Chat} from "../Chat/Chat";
 import {PlayerLeftModal} from "./PlayerLeftModal/PlayerLeftModal";
 import './RoomPage.css'
@@ -41,9 +41,10 @@ export const RoomPage = () => {
         let ind = table.findIndex((element, ind, arr) => (element._id === userId));
         table[ind].isSpectator = false;
         setIsSpectator(false);
-    },[roomId, userId]);
+    },[table, roomId, userId]);
 
     const leaveRoom = useCallback(() => {
+        console.log("leave room", isSpectator);
         socket.emit("leave room", ({roomId, userId}));
         auth.leave();
         history.push('/profile');
@@ -77,22 +78,26 @@ export const RoomPage = () => {
         setRoomId(auth.roomId);
         setUserId(auth.userId);
         socket.emit('room info', { roomId: auth.roomId });
-        return () => {}
+        return () => {
+            socket.disconnect();
+        }
     }, [ENDPOINT]);
 
     useEffect(() => {
         socket.on('info', ({room}) => {
             console.log(room);
-            setRoom(room);
-            let min = getMinPlayers(room.game);
-            setMinPlayers(min);
-            let ind = table.findIndex((element, ind, arr) => (element._id === userId));
-            if (ind !== -1) {
-                setIsSpectator(table[ind].isSpectator);
+            if (room !== null) {
+                setRoom(room);
+                let min = getMinPlayers(room.game);
+                setMinPlayers(min);
+                let ind = room.spectators.findIndex((element, ind, arr) => (element._id.toString() === auth.userId.toString()));
+                if (ind !== -1) {
+                    setIsSpectator(true);
+                }
             }
-            console.log(isSpectator)
         });
-    },[]);
+        return () => {}
+    },[userId]);
 
     useEffect(() => {
         socket.on('game started', () => {
@@ -100,36 +105,35 @@ export const RoomPage = () => {
             setGameFinished(false);
             setGameStarted(true);
         });
-    },[]);
 
-    useEffect(() => {
         socket.on("delete room", () => {
+            dispatch(clearTable());
             auth.leave();
             history.push('/profile');
         });
-    }, []);
 
-    useEffect(() => {
         socket.on("game finished", () => {
+            console.log("game finished");
             setGameFinished(true);
             setGameStarted(false);
         });
-    }, []);
 
-    useEffect(() => {
         socket.on("board cleaned", () => {
             setGameFinished(false);
             setGameStarted(false);
         });
-    }, []);
 
-    useEffect(() => {
         socket.on("user left game", ({userId}) => {
             setChooseIfRestart(true);
             setUserToLeave(userId);
         });
-    }, []);
 
+        socket.on("user left room", ({userId}) => {
+            dispatch(deletePlayer(userId));
+        });
+
+        return () => {}
+    },[]);
 
     return(
         <div className="roomOuterContainer">
@@ -145,16 +149,6 @@ export const RoomPage = () => {
                 ) : (
                     <></>
                 )}
-                </div>
-                <div className="playersTable">
-                    { room ? (
-                        <PlayersTable
-                            room={room}
-                        >
-                        </PlayersTable>
-                    ) : (
-                        <></>
-                    )}
                 </div>
                 <div className="startGameButton">
                     {(!gameStarted || gameFinished) && room && room.owner._id ===userId ? (
@@ -197,6 +191,16 @@ export const RoomPage = () => {
                         >
                             Join as player
                         </Button>
+                    ) : (
+                        <></>
+                    )}
+                </div>
+                <div className="playersTable">
+                    { room ? (
+                        <PlayersTable
+                            room={room}
+                        >
+                        </PlayersTable>
                     ) : (
                         <></>
                     )}

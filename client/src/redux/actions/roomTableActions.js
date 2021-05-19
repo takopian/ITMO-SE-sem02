@@ -7,6 +7,13 @@ export const addPlayer = (name, _id, isSpectator) => {
     }
 }
 
+export const deletePlayer = (_id) => {
+    return {
+        type: "DELETEPLAYER",
+        _id,
+    }
+}
+
 export const incrementWinnerCounter = (gameId, playerId) => {
     return {
         type: "SETWINNER",

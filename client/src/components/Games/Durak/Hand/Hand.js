@@ -44,11 +44,13 @@ export const Hand = ({player, cards, attack, chooseCard, isDefending, isTaking, 
                 <div className="card-group">
                         { cards.map(
                             ((card, ind) => (
+                                <div key={card.value + card.suit}>
                                 <GameCard
                                     clickHandler={clickHandler}
                                     card={card}
                                 >
                                 </GameCard>
+                                </div>
                             )))
                         }
                 </div>

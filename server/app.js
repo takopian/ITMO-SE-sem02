@@ -1,7 +1,5 @@
 const config = require("./config.json");
-const roomDAO = require('./dao/roomDAO');
 const User = require('./models/User');
-const DurakGame = require('./models/Durak/DurakGame')
 const PORT = config.PORT || 5000;
 const express = require('express');
 const cors = require('cors');
@@ -11,6 +9,9 @@ const passport = require('passport');
 const socketio = require('socket.io');
 const session = require('express-session');
 const mongoose = require('mongoose');
+const MainPageSocketListener = require('./socket_listeners/MainPageSocketListener');
+const RoomPageSocketListener = require('./socket_listeners/RoomPageSocketListener');
+const DurakSocketListener = require('./socket_listeners/game_sockets/DurakSocketListener');
 
 
 const app = express();
@@ -93,186 +94,19 @@ app.use(session({ secret: 'secret' }));
 app.use(passport.initialize());
 app.use(passport.session());
 //app.use('/', express.static('./client/build'));
-
-io.on('connection', async (socket) => {
-    console.log("New socket connection.");
-
-    socket.join('common room');
-    const rooms = await roomDAO.getRooms();
-    io.to('common room').emit('roomsData', {rooms});
-
-    socket.on('create room', async ({name, user, game, isPrivate}) => {
-        const newRoomId = await roomDAO.createRoom(name, user, game, isPrivate);
-        console.log(newRoomId);
-        socket.join(newRoomId);
-        io.to(newRoomId).emit('room created', newRoomId);
-        console.log("room created.");
-        const rooms = await roomDAO.getRooms();
-        io.to('common room').emit('roomsData', {rooms});
-    });
-
-    socket.on('join room', async ({user, roomId}) => {
-        console.log(`user ${user._id} joined ${roomId}`);
-        let room;
-        if (games[roomId] !== undefined) {
-            room = await roomDAO.joinRoomAsSpectator(roomId, user);
-            games[roomId].joinAsSpectator(user);
-        } else {
-            room = await roomDAO.joinRoomAsPlayer(roomId, user);
-        }
-        console.log("joined");
-        roomIO.to(roomId).emit('info', {room});
-        const rooms = await roomDAO.getRooms();
-        io.to('common room').emit('roomsData', {rooms});
-    });
-
-    socket.on('disconnect', () => {
-        console.log('User had left main page.')
-    });
-});
-
 let games = {};
 
-roomIO.on('connection', async (socket) => {
-    console.log("New room socket connection.");
+io.on('connection', (socket) =>
+    new MainPageSocketListener(socket, io, roomIO, games).listen()
+);
 
-    socket.on('disconnect', () => {
-        console.log('User had left room.');
-    });
+roomIO.on('connection', (socket) =>
+    new RoomPageSocketListener(socket, roomIO, games).listen()
+);
 
-    socket.on('start game', async ({roomId}) => {
-        console.log("start game");
-        let room = await roomDAO.getRoomById(roomId);
-        let game = new DurakGame(room);
-        game.startUp();
-        games[roomId] = game;
-        roomIO.to(roomId).emit('game started');
-    });
-
-    socket.on('room info', async ( {roomId} ) => {
-        console.log('room info');
-        socket.join(roomId);
-        const room = await roomDAO.getRoomById(roomId);
-        roomIO.to(roomId).emit('info', {room});
-        if (games[roomId] !== undefined) {
-            roomIO.to(roomId).emit('game started');
-        }
-    });
-
-    socket.on('continue as player', async ( {roomId, userId} ) => {
-        console.log('continue as player');
-        await roomDAO.leaveRoom(roomId, userId);
-        const user = await User.findOne({_id: userId});
-        await roomDAO.joinRoomAsPlayer(roomId, user);
-        roomIO.to(roomId).emit('info', {room});
-    });
-
-    socket.on("leave room", async ({roomId, userId}) => {
-        console.log("leave room");
-        await roomDAO.leaveRoom(roomId, userId);
-        const room = await roomDAO.getRoomById(roomId);
-        roomIO.to(roomId).emit('info', {room});
-        if (games[roomId]) {
-            roomIO.to(roomId).emit('user left game', {userId});
-        }
-    });
-
-    socket.on("continue without user", ({roomId, userId}) => {
-        console.log(`continue without ${userId}`);
-        if (games[roomId]) {
-            games[roomId].leaveGame(userId);
-            roomIO.to(roomId).emit('game started');
-        }
-    })
-
-    socket.on("delete room", async ({roomId, userId}) => {
-        console.log("delete room");
-        await roomDAO.deleteRoom(roomId, userId);
-        roomIO.to(roomId).emit('delete room', {roomId});
-    });
-
-    socket.on("clean board", ({roomId}) => {
-        console.log("clean board");
-        roomIO.to(roomId).emit('board cleaned');
-    });
-
-    socket.on('send message', async ({roomId, userId, text}) => {
-        console.log('send message ', text);
-        const user = await User.findOne({_id: userId});
-        const message = {text, name: user.name, pic: user.pic};
-        await roomDAO.addMessage(roomId, message);
-        const room = await roomDAO.getRoomById(roomId);
-        roomIO.to(roomId).emit('info', {room});
-    });
-});
-
-durakIO.on('connection', async (socket) => {
-    console.log("New durak socket connection.");
-
-    function sendInfo(game){
-        let gameInfo = {...game, discardedCards: game.discardedCards.length, deque: game.deque.cards.length, hands: {}}
-        for (let player of game.room.players) {
-            gameInfo.hands[player._id] = game.hands[player._id].length;
-        }
-
-        for (let spec of game.room.spectators) {
-            durakIO.to(spec._id.toString()).emit('game state', {game: gameInfo});
-        }
-
-        for (let player of game.room.players) {
-            gameInfo.hands[player._id] = game.hands[player._id];
-            durakIO.to(player._id.toString()).emit('game state', {game: gameInfo});
-            gameInfo.hands[player._id] = game.hands[player._id].length;
-        }
-    }
-
-    socket.on('disconnect', () => {
-        console.log('User had left durak game.')
-    });
-
-    socket.on('game info', ({roomId, userId}) => {
-        console.log("game info");
-        socket.join(userId);
-        socket.join(roomId);
-        sendInfo(games[roomId]);
-    });
-
-    socket.on('attack', ({roomId, userId, card}) => {
-        console.log("attack", roomId, userId, card);
-        games[roomId].attack(userId, card);
-        sendInfo(games[roomId]);
-    });
-
-    socket.on('defend', ({roomId, key, topCard}) => {
-        console.log("defend");
-        games[roomId].defend(key, topCard);
-        sendInfo(games[roomId]);
-    });
-
-    socket.on('take board cards', ({roomId}) => {
-        console.log("take board cards");
-        games[roomId].countToTake += 1;
-        if (games[roomId].countToTake === games[roomId].room.players.length) {
-            games[roomId].takeBoardCards();
-        }
-        sendInfo(games[roomId]);
-    });
-
-    socket.on('next turn', ({roomId}) => {
-        console.log("next turn");
-        games[roomId].countToNextTurn += 1;
-        if (games[roomId].countToNextTurn === games[roomId].room.players.length - 1) {
-            games[roomId].endOfTurn();
-        }
-        sendInfo(games[roomId]);
-    });
-
-    socket.on('game finished', ({roomId}) => {
-        console.log("game finished");
-        roomIO.to(roomId).emit("game finished", ({roomId}));
-    });
-});
-
+durakIO.on('connection',(socket) =>
+    new DurakSocketListener(socket, durakIO, roomIO, games).listen()
+);
 
 app.get('/profile', isLoggedIn, function(req, res) {
     res.send(req.user)

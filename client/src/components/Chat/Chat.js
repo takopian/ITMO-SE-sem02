@@ -2,8 +2,6 @@ import React, {useCallback, useState} from "react";
 import ScrollToBottom from 'react-scroll-to-bottom';
 import {Message} from "./Message/Message";
 import {ChatForm} from './Form/Form'
-import InputGroup from 'react-bootstrap/InputGroup'
-import Button from 'react-bootstrap/Button'
 import './Chat.css'
 
 

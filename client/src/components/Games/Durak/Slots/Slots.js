@@ -5,7 +5,7 @@ import './Slots.css'
 
 export const Slots = ({defend, slots, isDefending, chosenCard}) => {
     const [toRender, setToRender] = useState(slots);
-    const [left, setLeft] = useState(["40%", "45%", "50%"])
+    const [left, setLeft] = useState(["50%", "55%", "60%"])
     const clickHandler = (ind, slot) => {
         if (isDefending && slot.bottom && !slot.top && chosenCard) {
             defend(ind, chosenCard);
@@ -19,7 +19,7 @@ export const Slots = ({defend, slots, isDefending, chosenCard}) => {
     return(
         <div className="slotsContainer">
             {slots.map((slot, ind) => (
-                <div>
+                <div key={slot.key}>
                     <div
                         className="bottomCard"
                         style={{position: "fixed", top: ind <= 2 ? "40%": "55%", left: left[ind % 3]}}

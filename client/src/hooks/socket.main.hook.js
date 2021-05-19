@@ -20,7 +20,9 @@ export const useMainPageSocket = () => {
 
     useEffect(() => {
         socket = io(ENDPOINT);
-        return () => {};
+        return () => {
+            socket.disconnect();
+        };
     },[ENDPOINT])
 
     useEffect(() => {

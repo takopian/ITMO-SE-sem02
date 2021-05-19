@@ -66,7 +66,7 @@ export const Durak = ({room, userId}) => {
 
     const angleToStyle = (angle) => {
         const rad = 25;
-        const leftVal = 40;
+        const leftVal = 50;
         const bottomVal = 50;
         if (angle > 0 && angle < 90){
             const left = leftVal - rad * Math.sin(angle * Math.PI / 180);
@@ -100,9 +100,12 @@ export const Durak = ({room, userId}) => {
     }
 
     useEffect(() => {
+
         socket = io(ENDPOINT, {path: "/game/durak"});
         socket.emit("game info", ({roomId: room._id, userId}));
-        return () => {}
+        return () => {
+            socket.disconnect();
+        }
     }, [ENDPOINT]);
 
 
@@ -130,6 +133,7 @@ export const Durak = ({room, userId}) => {
             setIsSpectator(game.room.players.findIndex(((value, index, obj) => value._id === userId)) === -1);
             setGame(game);
         });
+        return () => {}
     },[]);
 
     useEffect(() => {
@@ -144,13 +148,13 @@ export const Durak = ({room, userId}) => {
                 (element, index, array) => (element._id === userId));
             let alterInd = game.room.players.findIndex(
                 (element, index, array) => (element._id.toString() === game.room.owner._id.toString()));
-            let curInd = curIndPlayers === -1 ? (alterInd + 1) % game.room.players.length : (curIndPlayers + 1) % game.room.players.length;
+            let curInd = curIndPlayers === -1 ?
+                (alterInd + 1) % game.room.players.length : (curIndPlayers + 1) % game.room.players.length;
             const angleStep = 360 / game.room.players.length;
             let curAngle = angleStep;
             let newOtherHands = []
             let newOtherHandsStyles = []
             for (let i = 0; i < game.room.players.length - 1; i++) {
-                console.log(game.room.owner.name);
                 newOtherHands.push({player: {_id: game.room.players[curInd]._id,
                         name: game.room.players[curInd].name,
                         isDefending: defendingPlayer._id === game.room.players[curInd]._id},
@@ -165,6 +169,7 @@ export const Durak = ({room, userId}) => {
                 curAngle += angleStep;
             }
         }
+        return () => {}
     }, [game]);
 
     useEffect(() => {
@@ -184,19 +189,33 @@ export const Durak = ({room, userId}) => {
                         >
                         </Slots>
                     </div>
-                    { game.deque > 0 ? (
-                        <div className="dequeContainer">
-                            <Deque
-                                numberOfCards={game.deque}
-                                bestCard={game.bestCard}
-                            >
-                            </Deque>
-                        </div>
-                    ) :(
-                        <></>
-                    )}
+                    {
+                        game.deque > 0 ? (
+                            <div className="dequeContainer">
+                                <Deque
+                                    numberOfCards={game.deque}
+                                    bestCard={game.bestCard}
+                                >
+                                </Deque>
+                            </div>
+                        ) :(
+                            <></>
+                        )
+                    }
+                    {
+                        game.discardedCards > 0 ? (
+                            <div className="discardedCardsContainer">
+                                <Deque
+                                    numberOfCards={game.discardedCards}
+                                >
+                                </Deque>
+                            </div>
+                        ) : (
+                            <></>
+                        )
+                    }
                     {otherHands.map((hand, index) => (
-                        <div className="otherHandContainer" style={{...otherHandsStyles[index]}}>
+                        <div key={hand.player._id} className="otherHandContainer" style={{...otherHandsStyles[index]}}>
                             <Hand
                             player={hand.player}
                             numberOfCards={hand.numberOfCards}
@@ -267,12 +286,16 @@ export const Durak = ({room, userId}) => {
                             <></>
                         )}
                     </div>
-                    { loser && winner ? (
+                    { loser && winner && game.room.players.findIndex(
+                        (element, index, array) => (element._id === loser)) ? (
                         <div className="endGameInfo">
                             <Card className="cardStyle">
                                 <Card.Body>
                                     <Card.Text>
-                                        Игра окончена. Победитель - {game.room.players[game.room.players.findIndex(
+                                        Игра окончена.
+                                    </Card.Text>
+                                    <Card.Text>
+                                        Победитель - {game.room.players[game.room.players.findIndex(
                                         (element, index, array) => (element._id === winner))].name}
                                     </Card.Text>
                                     <Card.Text>

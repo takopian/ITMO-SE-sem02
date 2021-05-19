@@ -56,7 +56,7 @@ async function leaveRoom (roomId, userId) {
         const filter = {_id : userId};
         const update = {joinedRoom : null};
         await User.findOneAndUpdate(filter, update);
-        return;
+        return false;
     }
     ind = room.spectators.findIndex((element, index, array) => (element._id.toString() === userId));
     if (ind !== -1) {
@@ -65,7 +65,9 @@ async function leaveRoom (roomId, userId) {
         const filter = {_id : userId};
         const update = {joinedRoom : null};
         await User.findOneAndUpdate(filter, update);
+        return true;
     }
+    return false;
 }
 
 async function createRoom (name, owner, game, isPrivate) {
