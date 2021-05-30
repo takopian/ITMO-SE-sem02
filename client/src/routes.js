@@ -6,7 +6,7 @@ import {
     Switch
     }
     from "react-router-dom";
-import {AuthPage} from './components/AuthPage'
+import {AuthPage} from './components/AuthPage/AuthPage'
 import {MainPage} from "./components/MainPage/MainPage";
 import {RoomPage} from "./components/RoomPage/RoomPage";
 

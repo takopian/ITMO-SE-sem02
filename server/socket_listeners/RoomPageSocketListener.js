@@ -1,7 +1,7 @@
 const roomDAO = require('../dao/roomDAO');
 const DurakGame = require('../models/Durak/DurakGame')
 const User = require('../models/User');
-
+const GameFactory = require('./GameFactory')
 
 class RoomPageSocketListener {
     socket;
@@ -12,7 +12,9 @@ class RoomPageSocketListener {
     async startGame({roomId}) {
         console.log("start game");
         let room = await roomDAO.getRoomById(roomId);
-        let game = new DurakGame(room);
+        const factory = new GameFactory();
+        const gameConstructor = factory.createGame(room.game);
+        let game = new gameConstructor(room);
         game.startUp();
         const message = {text:"Козырь: " + game.bestCard.suit, name: "Дурак", pic: ''};
         await roomDAO.addMessage(roomId, message);

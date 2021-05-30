@@ -55,7 +55,6 @@ export const CreateRoom = ({setName_, setIsPrivate_, setGame_, createRoom}) => {
                             </Form.Label>
                             <Form.Control as="select" value={game} onChange={({target:{value}}) =>  handleGameChange(value)}>
                                 <option> Дурак</option>
-                                <option>Манчкин(нет)</option>
                             </Form.Control>
                         </Form.Group>
                     </Form>

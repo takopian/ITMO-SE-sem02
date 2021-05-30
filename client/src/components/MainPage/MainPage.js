@@ -72,16 +72,16 @@ export const MainPage = () => {
     return (
         <div className="container">
             <div className="controls">
-            <div className="userInfo">
-                <div className="userName">
-                    {(user) ? user.name : null}
+                <div className="userInfo">
+                    <img className="profilePic"
+                        src={(user) ? user.pic : ''}
+                        sizes={0.5}
+                        alt="new"
+                    />
+                    <div className="userName">
+                        <h5> {(user) ? user.name : null} </h5>
+                    </div>
                 </div>
-                <img className="profilePic"
-                    src={(user) ? user.pic : ''}
-                    sizes={0.5}
-                    alt="new"
-                />
-            </div>
                 <div className="createRoom">
                     <CreateRoom
                         setName_={setName}

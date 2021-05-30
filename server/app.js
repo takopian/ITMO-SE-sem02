@@ -12,6 +12,7 @@ const mongoose = require('mongoose');
 const MainPageSocketListener = require('./socket_listeners/MainPageSocketListener');
 const RoomPageSocketListener = require('./socket_listeners/RoomPageSocketListener');
 const DurakSocketListener = require('./socket_listeners/game_sockets/DurakSocketListener');
+const facebookStrategy = require('./passport_strategies/facebookAuthStrategy')
 
 
 const app = express();
@@ -42,43 +43,7 @@ mongoose.connect(config.mongoURL, {
     useUnifiedTopology: true
 }).catch((err) => console.log(err))
 
-const facebookStrategy = require('passport-facebook').Strategy
-
-passport.use(new facebookStrategy({
-        clientID        : config.Facebook.clientID,
-        clientSecret    : config.Facebook.clientSecret,
-        callbackURL     : "http://localhost:3000/auth/facebook/callback",
-        profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)','email']
-    },
-    function(token, refreshToken, profile, done) {
-        process.nextTick(function() {
-            User.findOne({ 'uid' : profile.id }, function(err, user) {
-                if (err)
-                    return done(err);
-                if (user) {
-                    user.isOnline = true;
-                    user.name  = profile.name.givenName + (profile.name.familyName ? ' ' + profile.name.familyName : '');
-                    user.pic = profile.photos[0].value;
-                    user.save();
-                    console.log("user found");
-                    return done(null, user);
-                } else {
-                    const newUser = new User();
-                    newUser.uid    = profile.id;
-                    newUser.name  = profile.name.givenName + (profile.name.familyName ? ' ' + profile.name.familyName : '');
-                    newUser.email = profile.emails[0].value;
-                    newUser.pic = profile.photos[0].value;
-                    newUser.isOnline = true;
-                    newUser.joinedRoom = null;
-                    newUser.save(function(err) {
-                        if (err)
-                            throw err;
-                        return done(null, newUser);
-                    });
-                }
-            });
-        })
-    }));
+passport.use(facebookStrategy);
 
 passport.serializeUser(function(user, done) {
     done(null, user.id);

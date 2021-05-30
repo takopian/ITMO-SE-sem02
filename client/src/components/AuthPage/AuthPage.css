@@ -1,0 +1,14 @@
+
+.authHeader {
+    margin-top: 2%;
+}
+.authContainer {
+    position: fixed;
+    left: 40%;
+    display: flex;
+    flex-direction: row;
+    margin-top: 5%;
+}
+.facebookAuthButton {
+    margin-left: 20px;
+}
