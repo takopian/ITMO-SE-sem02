@@ -4,9 +4,9 @@
 }
 .authContainer {
     position: fixed;
-    left: 40%;
-    display: flex;
-    flex-direction: row;
+    left: 42.5%;
+    /*display: flex;*/
+    /*flex-direction: row;*/
     margin-top: 5%;
 }
 .facebookAuthButton {

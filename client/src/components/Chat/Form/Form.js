@@ -17,7 +17,7 @@ export const ChatForm = ({send, messageText, setMessageText}) => {
                 onKeyPress={event => event.key === 'Enter' ? send(event) : null}
             />
             <Button className="sendButton" onClick={send}>
-                Send
+                Отправить
             </Button>
         </Form>
     )

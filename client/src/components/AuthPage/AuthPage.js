@@ -3,6 +3,7 @@ import {useHttp} from "../../hooks/http.hook";
 import {AuthContext} from '../../context/AuthContext'
 import Button from "react-bootstrap/Button";
 import './AuthPage.css';
+import Card from "react-bootstrap/Card";
 
 export const AuthPage = () => {
     const auth = useContext(AuthContext)
@@ -36,10 +37,11 @@ export const AuthPage = () => {
                     <Button
                         variant="primary"
                         onClick = {() => {window.location = "/auth/facebook"}}
+                        style={{backgroundColor: "white", borderColor: " white"}}
                         ref={loginRef}
                         disabled={loading}
                     >
-                        facebook
+                        <img  style={{width: 50}} src={process.env.PUBLIC_URL + '/facebook.png'} alt="Card image"/>
                     </Button>
                 </div>
             </div>

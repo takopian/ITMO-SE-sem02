@@ -6,7 +6,6 @@ const GameFactory = require('./GameFactory')
 class RoomPageSocketListener {
     socket;
     games;
-    io;
     roomIO
 
     async startGame({roomId}) {
@@ -16,7 +15,26 @@ class RoomPageSocketListener {
         const gameConstructor = factory.createGame(room.game);
         let game = new gameConstructor(room);
         game.startUp();
-        const message = {text:"Козырь: " + game.bestCard.suit, name: "Дурак", pic: ''};
+        let suit;
+        switch (game.bestCard.suit) {
+            case "H": {
+                suit = "Черви";
+                break;
+            }
+            case "S": {
+                suit = "Пики";
+                break;
+            }
+            case "C": {
+                suit = "Крести";
+                break;
+            }
+            case "D": {
+                suit = "Буби";
+                break;
+            }
+        }
+        const message = {text:"Козырь: " + suit, name: "Дурак", pic: ''};
         await roomDAO.addMessage(roomId, message);
         this.games[roomId] = game;
         room = await roomDAO.getRoomById(roomId);
@@ -83,10 +101,10 @@ class RoomPageSocketListener {
         this.roomIO.to(roomId).emit('info', {room});
     }
 
-    constructor(socket,roomIO, games) {
+    constructor(socket, roomIO, games) {
+        this.games = games;
         this.socket = socket;
         this.roomIO = roomIO;
-        this.games = games;
         this.startGame = this.startGame.bind(this);
         this.cleanBoard = this.cleanBoard.bind(this);
         this.continueAsPlayer = this.continueAsPlayer.bind(this);

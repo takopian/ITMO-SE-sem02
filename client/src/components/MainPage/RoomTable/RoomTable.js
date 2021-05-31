@@ -15,7 +15,6 @@ export const RoomTable = ({availableRooms, joinRoom, loading}) => {
                 <th>Игра</th>
                 <th>Создатель</th>
                 <th>Количество игроков</th>
-                <th>Подключиться</th>
             </tr>
             </thead>
             <tbody>
@@ -31,7 +30,7 @@ export const RoomTable = ({availableRooms, joinRoom, loading}) => {
                             onClick={() => {joinRoom(room._id)}}
                             disabled={loading}
                         >
-                            Join
+                            Войти
                         </Button>
                     </td>
                 </tr>)

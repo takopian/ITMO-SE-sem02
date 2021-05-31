@@ -255,7 +255,7 @@ export const Durak = ({room, userId}) => {
                                     onClick={takeBoardCards}
                                     disabled={countToTake > 0 || isSpectator}
                                 >
-                                    Take cards
+                                    Взять карты
                                 </Button>
                             </div>
                         ) : (
@@ -267,7 +267,7 @@ export const Durak = ({room, userId}) => {
                                     onClick={nextTurn}
                                     disabled={clickedNextTurn || cardsBeaten < slots.length || isSpectator}
                                 >
-                                    End turn
+                                    Закончить ход
                                 </Button>
                             </div>
                         ) : (
@@ -279,7 +279,7 @@ export const Durak = ({room, userId}) => {
                                     onClick={takeBoardCards}
                                     disabled={clickedTakeCards || isSpectator}
                                 >
-                                    Ok
+                                    Ок
                                 </Button>
                             </div>
                         ) : (

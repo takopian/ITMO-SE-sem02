@@ -17,7 +17,7 @@ export const Hand = ({player, cards, attack, chooseCard, isDefending, isTaking, 
         return (
             <div className="handOuterContainer">
                 <div className="infoContainer">
-                    <div className="playerName" style={{color: color}}>
+                    <div className="playerName">
                         <h9>
                             {player}
                         </h9>
@@ -60,7 +60,7 @@ export const Hand = ({player, cards, attack, chooseCard, isDefending, isTaking, 
         return (
             <div className="otherHandOuterContainer">
                 <div className="infoContainer">
-                    <div className="playerName" style={{color: color}}>
+                    <div className="playerName">
                         <h9>
                             {player.name}
                         </h9>

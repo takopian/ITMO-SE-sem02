@@ -156,7 +156,7 @@ export const RoomPage = () => {
                             onClick={startGame}
                             disabled={room.players.length < minPlayers}
                         >
-                            Start
+                            Запуск игры
                         </Button>
                     ) : (
                         <></>
@@ -167,7 +167,7 @@ export const RoomPage = () => {
                         <Button
                             onClick={leaveRoom}
                         >
-                            Leave room
+                            Выйти из комнаты
                         </Button>
                     ) : (
                         <></>
@@ -178,7 +178,7 @@ export const RoomPage = () => {
                         <Button
                             onClick={deleteRoom}
                         >
-                            Close room
+                            Закрыть комнату
                         </Button>
                     ) : (
                         <></>
@@ -189,7 +189,7 @@ export const RoomPage = () => {
                         <Button
                             onClick={continueAsPlayer}
                         >
-                            Join as player
+                            Присоединиться как игрок
                         </Button>
                     ) : (
                         <></>

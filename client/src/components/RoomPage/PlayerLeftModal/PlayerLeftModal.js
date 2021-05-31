@@ -8,17 +8,17 @@ export const PlayerLeftModal = ({chooseIfRestart, chooseContinue, startGame, end
         <div className="playerLeftModalContainer">
             <Modal animation={false} show={chooseIfRestart}>
                 <Modal.Body>
-                    User left. Continue?
+                    Пользователь покинул комнату. Продолжить игру?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={chooseContinue} disabled={disabled}>
-                        Continue
+                        Продолжить
                     </Button>
                     <Button variant="primary" onClick={startGame} disabled={disabled}>
-                        Restart
+                        Перезапустить
                     </Button>
                     <Button variant="secondary" onClick={endGame}>
-                        End game
+                        Закончить игру
                     </Button>
                 </Modal.Footer>
             </Modal>
